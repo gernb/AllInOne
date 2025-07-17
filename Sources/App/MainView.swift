@@ -14,7 +14,7 @@ struct MainView {
       }
     }
     div {
-      p { "Hello, there!" }
+      p { "Hello, world!" }
       button { showSomething ? "Hide element" : "Show element" }
         .onClick { _ in
           showSomething.toggle()
