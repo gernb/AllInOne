@@ -1,0 +1,94 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug AllInOne",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/AllInOne",
+      "preLaunchTask": "swift: Build Debug AllInOne"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release AllInOne",
+      "program": "${workspaceFolder:AllInOne}/.build/release/AllInOne",
+      "preLaunchTask": "swift: Build Release AllInOne"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug App",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/App",
+      "preLaunchTask": "swift: Build Debug App"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release App",
+      "program": "${workspaceFolder:AllInOne}/.build/release/App",
+      "preLaunchTask": "swift: Build Release App"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug Server",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/Server",
+      "preLaunchTask": "swift: Build Debug Server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release Server",
+      "program": "${workspaceFolder:AllInOne}/.build/release/Server",
+      "preLaunchTask": "swift: Build Release Server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug server",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/server",
+      "preLaunchTask": "swift: Build Debug server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release server",
+      "program": "${workspaceFolder:AllInOne}/.build/release/server",
+      "preLaunchTask": "swift: Build Release server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug app",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/app",
+      "preLaunchTask": "swift: Build Debug app"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release app",
+      "program": "${workspaceFolder:AllInOne}/.build/release/app",
+      "preLaunchTask": "swift: Build Release app"
+    }
+  ]
+}
