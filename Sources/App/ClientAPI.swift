@@ -8,7 +8,7 @@ struct ClientAPI: Sendable {
     case unknown
   }
 
-  var folderListing: @Sendable (_ path: String) async throws -> FolderListing
+  var folderListing: @Sendable (_ path: String) async throws -> FolderListingResponse
   var fetchFile: @Sendable (_ path: String, _ etag: String?) async throws -> (data: Data, etag: String)?
   var fetchJson: @Sendable (_ path: String, _ etag: String?) async throws -> (json: JSValue, etag: String)?
 
@@ -76,7 +76,7 @@ extension ClientAPI {
       guard let (json, _) = try await fetchJson(url: baseUrl + path, etag: nil) else {
         throw Error.unknown
       }
-      return try JSValueDecoder().decode(FolderListing.self, from: json)
+      return try JSValueDecoder().decode(FolderListingResponse.self, from: json)
     },
     fetchFile: { path, currentEtag in
       guard let (resp, etag) = try await jsFetch(baseUrl + path, etag: currentEtag) else {
