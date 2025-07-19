@@ -13,7 +13,7 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
       ?? .info
     return logger
   }()
-  let router = buildRouter(logger: logger)
+  let router = try buildRouter(logger: logger, dataPath: arguments.dataPath)
   let app = Application(
     router: router,
     configuration: .init(
@@ -25,7 +25,7 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
   return app
 }
 
-func buildRouter(logger: Logger) -> Router<AppRequestContext> {
+func buildRouter(logger: Logger, dataPath: String) throws -> Router<AppRequestContext> {
   let router = Router(context: AppRequestContext.self)
   let path = FileManager.default.currentDirectoryPath + "/public"
   router.addMiddleware {
@@ -39,5 +39,6 @@ func buildRouter(logger: Logger) -> Router<AppRequestContext> {
   router.get("/hello") { _, _ in
     return "Hello!"
   }
+  try FileController(dataPath: dataPath).addRoutes(to: router.group("api/v1/files"))
   return router
 }

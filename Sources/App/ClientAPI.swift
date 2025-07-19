@@ -1,11 +1,6 @@
 import Foundation
 @preconcurrency import JavaScriptKit
-
-struct FolderListing: Codable, Sendable {
-  let status: Int
-  let files: [String]
-  let directories: [String]
-}
+import Shared
 
 struct ClientAPI: Sendable {
   enum Error: Swift.Error {
@@ -49,10 +44,10 @@ extension ClientAPI {
   private static func jsFetch(_ url: String, etag: String? = nil) async throws -> (response: JSValue, etag: String)? {
     let jsFetch = JSObject.global.fetch.function!
     let options = if let etag {
-      ["headers": ["If-None-Match": etag]].jsObject()
-    } else {
-      JSObject()
-    }
+        ["headers": ["If-None-Match": etag]].jsObject()
+      } else {
+        JSObject()
+      }
     let resp = try await JSPromise(jsFetch(url, options).object!)!.value
     let response = resp.object!
     if response.status == 304 {

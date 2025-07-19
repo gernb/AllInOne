@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+    {
+      "type": "swift",
+      "args": [
+        "build",
+        "--product",
+        "server",
+        "-Xswiftc",
+        "-diagnostic-style=llvm"
+      ],
+      "env": {},
+      "cwd": "/home/gern/src/AllInOne",
+      "disableTaskQueue": true,
+      "dontTriggerTestDiscovery": true,
+      "showBuildStatus": "swiftStatus",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "label": "swift: Build Debug server",
+      "detail": "swift build --product server -Xswiftc -diagnostic-style=llvm"
+    }
+  ]
+}

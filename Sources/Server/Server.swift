@@ -15,6 +15,9 @@ struct Server: AsyncParsableCommand, AppArguments {
   @Option(name: .shortAndLong)
   var logLevel: Logger.Level?
 
+  @Option(name: .shortAndLong)
+  var dataPath: String = "data"
+
   func run() async throws {
     let app = try await buildApplication(self)
     try await app.runService()
@@ -26,6 +29,7 @@ protocol AppArguments {
   var hostname: String { get }
   var port: Int { get }
   var logLevel: Logger.Level? { get }
+  var dataPath: String { get }
 }
 
 extension Logger.Level: @retroactive ExpressibleByArgument {}
