@@ -34,7 +34,9 @@ struct MainView {
               // try await clientApi.delete(file: "/file1.json")
               // print("done")
               let tag = try await clientApi.put(
-                object: File(name: "peter", version: "0.5.6"), at: "/file.json")
+                object: File(name: "peter", version: "0.5.6"),
+                at: "/file.json"
+              )
               print(tag)
             } catch {
               print("Error:", String(describing: error))

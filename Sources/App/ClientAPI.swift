@@ -40,7 +40,7 @@ extension ClientAPI {
 }
 
 extension ClientAPI {
-  private static let baseUrl = "http://server:8000"
+  private static let baseUrl = "/api/v1/files"
   private static func jsFetch(_ url: String, etag: String? = nil) async throws -> (response: JSValue, etag: String)? {
     let jsFetch = JSObject.global.fetch.function!
     let options = if let etag {
@@ -97,7 +97,7 @@ extension ClientAPI {
     putFile: { data, path in
       let jsFetch = JSObject.global.fetch.function!
       let options = [
-        "method": "PUT",
+        "method": "POST",
         "headers": ["Content-Type": "application/octet-stream"],
         "body": JSTypedArray<UInt8>(data).jsValue,
       ].jsObject()
@@ -110,10 +110,7 @@ extension ClientAPI {
       guard let obj = resp.json().object, let json = try await JSPromise(obj)?.value else {
         throw Error.unknown
       }
-      struct Result: Decodable {
-        let etag: String
-      }
-      let result = try JSValueDecoder().decode(Result.self, from: json)
+      let result = try JSValueDecoder().decode(UploadResponse.self, from: json)
       return result.etag
     },
     delete: { path in
