@@ -4,7 +4,7 @@ import Hummingbird
 import MD5
 import Shared
 
-struct FileController {
+struct FileController: Sendable {
   let baseUrl: URL
 
   private let fileManager = FileManager.default
@@ -14,10 +14,9 @@ struct FileController {
   init(dataPath: String) throws {
     let cwd = fileManager.currentDirectoryPath
     self.baseUrl = URL(filePath: cwd).appending(path: dataPath)
-    var isFolder = true
-    if fileManager.fileExists(atPath: baseUrl.path(), isDirectory: &isFolder) == false {
+    if fileManager.fileExists(atPath: baseUrl.path(), isDirectory: nil) == false {
       try fileManager.createDirectory(at: baseUrl, withIntermediateDirectories: true)
-    } else if isFolder == false {
+    } else if try baseUrl.isDirectory() == false {
       struct ConfigError: Swift.Error {
         let message: String
       }
@@ -36,11 +35,10 @@ struct FileController {
   private func download(_ request: Request, context: some RequestContext) async throws -> Response {
     let path = "/" + context.parameters.getCatchAll().joined(separator: "/")
     let url = baseUrl.appending(path: path)
-    var isFolder = false
-    guard fileManager.fileExists(atPath: url.path(), isDirectory: &isFolder) else {
+    guard fileManager.fileExists(atPath: url.path(), isDirectory: nil) else {
       throw HTTPError(.notFound)
     }
-    if isFolder {
+    if try url.isDirectory() {
       let data = try encoder.encode(folderListing(for: url))
       return .init(
         status: .ok,
@@ -95,12 +93,11 @@ struct FileController {
   private func delete(_ request: Request, context: some RequestContext) async throws -> Response {
     let path = "/" + context.parameters.getCatchAll().joined(separator: "/")
     let url = baseUrl.appending(path: path)
-    var isFolder = false
-    guard fileManager.fileExists(atPath: url.path(), isDirectory: &isFolder) else {
+    guard fileManager.fileExists(atPath: url.path(), isDirectory: nil) else {
       throw HTTPError(.notFound)
     }
     try fileManager.removeItem(at: url)
-    if isFolder {
+    if try url.isDirectory() {
       context.logger.info("Deleted folder: \(path)")
     } else {
       context.logger.info("Deleted file: \(path)")
@@ -141,3 +138,11 @@ extension FileController {
 }
 
 extension UploadResponse: ResponseEncodable {}
+
+extension URL {
+  func isDirectory() throws -> Bool {
+    (try resourceValues(forKeys: [.isDirectoryKey])).isDirectory ?? false
+  }
+}
+
+extension FileManager: @retroactive @unchecked Sendable {}
