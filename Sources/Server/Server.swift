@@ -7,10 +7,10 @@ struct Server: AsyncParsableCommand, AppArguments {
   var serverName = "app_server"
 
   @Option(name: .shortAndLong)
-  var hostname: String = "127.0.0.1"
+  var hostname: String = "0.0.0.0"
 
   @Option(name: .shortAndLong)
-  var port: Int = 9100
+  var port: Int = 80
 
   @Option(name: .shortAndLong)
   var logLevel: Logger.Level?

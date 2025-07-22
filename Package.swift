@@ -20,6 +20,8 @@ let package = Package(
     .package(url: "https://github.com/sliemeobn/elementary-dom", branch: "main"),
     .package(url: "https://github.com/sliemeobn/elementary-css", branch: "main"),
     .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", branch: "main"),
+    
+    .package(url: "https://github.com/apple/swift-container-plugin", from: "1.0.2"),
   ],
   targets: [
     .target(
