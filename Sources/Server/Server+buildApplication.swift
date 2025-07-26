@@ -20,6 +20,9 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
       address: .hostname(arguments.hostname, port: arguments.port),
       serverName: arguments.serverName
     ),
+    onServerRunning: { [port = arguments.port] _ in
+      browserSyncReload(port: port)
+    },
     logger: logger
   )
   return app
