@@ -7,48 +7,43 @@ final class MainView: View {
   private var tokens: Set<ObserveToken> = []
 
   var body: JSValue {
-    let body = App.doc.createElement("div")
+    let body = DOM.create("div")
 
-    let path = App.doc.createElement("h2")
-    body.addElement(path)
+    let pathLabel = DOM.addNew("h2", to: body)
 
-    let backButton = App.doc.createElement("img")
-    backButton.src = "/back.png"
-    backButton.height = 40
-    backButton.style = "display: none;"
-    backButton.onclick = .object(
-      JSClosure { [model] _ in
+    let backButton = DOM.addNew("img", to: body) {
+      $0.src = "/back.png"
+      $0.height = 40
+      $0.style = "display: none;"
+      $0.onClick { [model] in
         model.path.removeLast()
-        return .undefined
       }
-    )
-    body.addElement(backButton)
+    }
 
-    let list = App.doc.createElement("div")
-    body.addElement(list)
+    let list = DOM.addNew("div", to: body)
 
     observe { [model] in
-      path.innerText = .string(model.pathString)
+      pathLabel.innerText = .string(model.pathString)
       backButton.style = model.path.isEmpty ? "display: none;" : "display: inline;"
 
-      let listContents = App.doc.createElement("div")
-      for folder in model.folders {
-        let item = ListItem(folder, isFolder: true) {
-          model.path.append(folder)
-        } trashTapped: {
-          App.alert("delete '\(folder)'")
+      DOM.addNew("div", to: list, replace: true) { list in
+        for folder in model.folders {
+          let item = ListItem(folder, isFolder: true) {
+            model.path.append(folder)
+          } trashTapped: {
+            DOM.alert("delete '\(folder)'")
+          }
+          DOM.addView(item, to: list)
         }
-        listContents.addElement(item.body)
-      }
-      for file in model.files {
-        let item = ListItem(file) {
-          App.alert("'\(file)' tapped")
-        } trashTapped: {
-          App.alert("delete '\(file)'")
+        for file in model.files {
+          let item = ListItem(file) {
+            DOM.alert("'\(file)' tapped")
+          } trashTapped: {
+            DOM.alert("delete '\(file)'")
+          }
+          DOM.addView(item, to: list)
         }
-        listContents.addElement(item.body)
       }
-      _ = list.replaceChildren(listContents)
     }
     .store(in: &tokens)
 
@@ -84,7 +79,7 @@ final class MainViewModel {
         folders = response.directories
         files = response.files
       } catch {
-        App.alert(error.message)
+        DOM.alert(error.message)
       }
     }
   }
