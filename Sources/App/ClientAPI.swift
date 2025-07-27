@@ -13,6 +13,7 @@ struct ClientAPI: Sendable {
   var fetchJson: @Sendable (_ path: String, _ etag: String?) async throws -> (json: JSValue, etag: String)?
 
   var putFile: @Sendable (_ data: Data, _ path: String) async throws -> String
+  var createFolder: @Sendable (_ path: String) async throws -> String
   var delete: @Sendable (_ path: String) async throws -> Void
 }
 
@@ -34,6 +35,10 @@ extension ClientAPI {
   func put(object: any Encodable, at path: String) async throws -> String {
     let data = try JSONEncoder().encode(object)
     return try await putFile(data, path)
+  }
+  @discardableResult
+  func createFolder(at path: String) async throws -> String {
+    try await createFolder(path)
   }
   func delete(path: String) async throws {
     try await delete(path)
@@ -72,6 +77,23 @@ extension ClientAPI {
         "body": JSTypedArray<UInt8>(data).jsValue,
       ].jsObject()
       let resp = try await JSPromise(jsFetch(baseUrl + path, options).object!)!.value
+      let response = resp.object!
+      guard response.ok.boolean == true else {
+        let status = Int(response.status.number ?? 0)
+        throw Error.fetchError(status)
+      }
+      guard let obj = resp.json().object, let json = try await JSPromise(obj)?.value else {
+        throw Error.unknown
+      }
+      let result = try JSValueDecoder().decode(UploadResponse.self, from: json)
+      return result.etag
+    },
+    createFolder: { path in
+      let jsFetch = JSObject.global.fetch.function!
+      let options = [
+        "method": "POST",
+      ].jsObject()
+      let resp = try await JSPromise(jsFetch(baseUrl + path + "?isDirectory", options).object!)!.value
       let response = resp.object!
       guard response.ok.boolean == true else {
         let status = Int(response.status.number ?? 0)

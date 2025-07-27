@@ -22,6 +22,19 @@ final class MainView: View {
 
     let list = DOM.addNew("div", to: body)
 
+    let dialog = DOM.addNew("dialog", to: body, builder: createFolderDialog)
+    dialog.on("close") { [model] in
+      if let folderName = dialog.returnValue.string, folderName.isEmpty == false {
+        model.createFolder(folderName)
+      }
+    }
+    DOM.addNew("button", to: body) {
+      $0.innerText = "Create New Folder"
+      $0.onClick {
+        _ = dialog.showModal()
+      }
+    }
+
     observe { [model] in
       pathLabel.innerText = .string(model.pathString)
       backButton.style = model.path.isEmpty ? "display: none;" : "display: inline;"
@@ -59,6 +72,36 @@ final class MainView: View {
   func onAdded() {
     model.fetchCurrentDirectory()
   }
+
+  private func createFolderDialog(_ dialog: JSValue) {
+    let input = DOM.create("input") {
+      $0.type = "text"
+    }
+    DOM.addNew("label", to: dialog) {
+      $0.innerText = "Folder name:"
+      DOM.addElement(input, to: $0)
+    }
+    DOM.addNew("div", to: dialog) { div in
+      div.style = "display: flex; justify-content: space-evenly; margin-top: 5px"
+      DOM.addNew("button", to: div) {
+        $0.innerText = "Cancel"
+        $0.onClick {
+          _ = dialog.close()
+        }
+      }
+      DOM.addNew("button", to: div) {
+        $0.innerText = "Ok"
+        $0.onClick {
+          guard let folderName = input.value.string?.trimmingCharacters(in: .whitespaces),
+            folderName.isEmpty == false
+          else {
+            return
+          }
+          _ = dialog.close(folderName)
+        }
+      }
+    }
+  }
 }
 
 @MainActor
@@ -93,6 +136,17 @@ final class MainViewModel {
       do {
         let itemPath = pathString + "/" + item
         try await clientApi.delete(path: itemPath)
+        try await fetchCurrentDirectory()
+      } catch {
+        DOM.alert(error.message)
+      }
+    }
+  }
+
+  func createFolder(_ name: String) {
+    Task {
+      do {
+        try await clientApi.createFolder(at: pathString + "/" + name)
         try await fetchCurrentDirectory()
       } catch {
         DOM.alert(error.message)

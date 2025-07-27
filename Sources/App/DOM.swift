@@ -60,4 +60,14 @@ extension JSValue {
         }
       )
   }
+
+  func on(_ event: String, _ handler: @escaping () -> Void) {
+    _ = self.addEventListener(
+      event,
+      JSClosure { _ in
+        handler()
+        return .undefined
+      }
+    )
+  }
 }
