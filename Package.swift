@@ -17,9 +17,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.4.0"),
     .package(url: "https://github.com/tayloraswift/swift-hash.git", from: "0.7.1"),
 
-    .package(url: "https://github.com/sliemeobn/elementary-dom", branch: "main"),
-    .package(url: "https://github.com/sliemeobn/elementary-css", branch: "main"),
     .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", branch: "main"),
+    .package(url: "https://github.com/pointfreeco/swift-navigation.git", from: "2.3.0"),
     
     .package(url: "https://github.com/apple/swift-container-plugin", from: "1.0.2"),
   ],
@@ -46,9 +45,9 @@ let package = Package(
       name: "App",
       dependencies: [
         "Shared",
-        .product(name: "ElementaryDOM", package: "elementary-dom"),
-        .product(name: "ElementaryCSS", package: "elementary-css"),
         .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
+        .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+        .product(name: "SwiftNavigation", package: "swift-navigation"),
       ],
     ),
   ]

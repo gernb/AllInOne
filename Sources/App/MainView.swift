@@ -1,92 +1,90 @@
-import ElementaryDOM
-import Foundation
 @preconcurrency import JavaScriptKit
+import SwiftNavigation
 
-@View
-struct MainView {
-  private let clientApi = ClientAPI.live
-  private let alert = JSObject.global.alert.function!
+@MainActor
+final class MainView: View {
+  private let model = MainViewModel()
+  private var tokens: Set<ObserveToken> = []
 
-  @State private var path: [String] = [] {
+  var body: JSValue {
+    let body = App.doc.createElement("div")
+
+    let path = App.doc.createElement("h2")
+    body.addElement(path)
+
+    let backButton = App.doc.createElement("img")
+    backButton.src = "/back.png"
+    backButton.height = 40
+    backButton.style = "display: none;"
+    backButton.onclick = .object(
+      JSClosure { [model] _ in
+        model.path.removeLast()
+        return .undefined
+      }
+    )
+    body.addElement(backButton)
+
+    let list = App.doc.createElement("div")
+    body.addElement(list)
+
+    observe { [model] in
+      path.innerText = .string(model.pathString)
+      backButton.style = model.path.isEmpty ? "display: none;" : "display: inline;"
+
+      let listContents = App.doc.createElement("div")
+      for folder in model.folders {
+        let item = ListItem(folder, isFolder: true) {
+          model.path.append(folder)
+        } trashTapped: {
+          App.alert("delete '\(folder)'")
+        }
+        listContents.addElement(item.body)
+      }
+      for file in model.files {
+        let item = ListItem(file) {
+          App.alert("'\(file)' tapped")
+        } trashTapped: {
+          App.alert("delete '\(file)'")
+        }
+        listContents.addElement(item.body)
+      }
+      _ = list.replaceChildren(listContents)
+    }
+    .store(in: &tokens)
+
+    return body
+  }
+
+  func onAdded() {
+    model.fetchCurrentDirectory()
+  }
+}
+
+@MainActor
+@Perceptible
+final class MainViewModel {
+  var path: [String] = [] {
     didSet {
-      // alert(pathString)
       fetchCurrentDirectory()
     }
   }
-  @State private var folders: [String] = []
-  @State private var files: [String] = []
+  private(set) var folders: [String] = []
+  private(set) var files: [String] = []
 
-  private var pathString: String {
+  var pathString: String {
     "/" + path.joined(separator: "/")
   }
 
-  var content: some View {
-    h2 { pathString }
-    div {
-      if path.isEmpty == false {
-        img(.src("/back.png"), .height(40))
-          .onClick { _ in
-            path.removeLast()
-          }
-      }
-      for folder in folders {
-        ListItem(folder, isFolder: true) {
-          path.append(folder)
-        } trashTapped: {
-          alert("delete '\(folder)'")
-        }
-      }
-      for file in files {
-        ListItem(file) {
-          alert("'\(file)' tapped")
-        } trashTapped: {
-          alert("delete '\(file)'")
-        }
-      }
+  private let clientApi = ClientAPI.live
 
-      // button { showSomething ? "Hide element" : "Show element" }
-      //   .onClick { _ in
-      //     showSomething.toggle()
-      //     //   JSObject.global.alert!("Button clicked!")
-      //     Task { [clientApi] in
-      //       do {
-      //         // let root = try await clientApi.folderListing("/")
-      //         // print(root)
-      //         struct File: Codable {
-      //           let name: String
-      //           let version: String
-      //         }
-      //         // if let (data, etag) = try await clientApi.fetch(path: "/file1.json", ifNotMatching: "W/\"122-1969daf00dd\"") {
-      //         //   let file = try JSONDecoder().decode(File.self, from: data)
-      //         //   print(file, etag)
-      //         // }
-      //         // try await clientApi.delete(file: "/file1.json")
-      //         // print("done")
-      //         let tag = try await clientApi.put(
-      //           object: File(name: "peter", version: "0.5.6"),
-      //           at: "/file.json"
-      //         )
-      //         print(tag)
-      //       } catch {
-      //         print("Error:", String(describing: error))
-      //       }
-      //     }
-      //   }
-    }
-    .onMount {
-      // print("mounted")
-      fetchCurrentDirectory()
-    }
-  }
-
-  private func fetchCurrentDirectory() {
-    Task { @MainActor [clientApi, pathString] in
+  func fetchCurrentDirectory() {
+    Task {
       do {
         let response = try await clientApi.folderListing(pathString)
         folders = response.directories
         files = response.files
       } catch {
-        print(error)
+        App.alert(error.message)
       }
     }
   }
