@@ -35,8 +35,8 @@ extension ClientAPI {
     let data = try JSONEncoder().encode(object)
     return try await putFile(data, path)
   }
-  func delete(file: String) async throws {
-    try await delete(file)
+  func delete(path: String) async throws {
+    try await delete(path)
   }
 }
 

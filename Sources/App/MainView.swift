@@ -31,7 +31,10 @@ final class MainView: View {
           let item = ListItem(folder, isFolder: true) {
             model.path.append(folder)
           } trashTapped: {
-            DOM.alert("delete '\(folder)'")
+            let confirmed = DOM.window.confirm("Do you want to delete '\(folder)'?").boolean!
+            if confirmed {
+              model.delete(folder)
+            }
           }
           DOM.addView(item, to: list)
         }
@@ -39,7 +42,10 @@ final class MainView: View {
           let item = ListItem(file) {
             DOM.alert("'\(file)' tapped")
           } trashTapped: {
-            DOM.alert("delete '\(file)'")
+            let confirmed = DOM.window.confirm("Do you want to delete '\(file)'?").boolean!
+            if confirmed {
+              model.delete(file)
+            }
           }
           DOM.addView(item, to: list)
         }
@@ -75,12 +81,28 @@ final class MainViewModel {
   func fetchCurrentDirectory() {
     Task {
       do {
-        let response = try await clientApi.folderListing(pathString)
-        folders = response.directories
-        files = response.files
+        try await fetchCurrentDirectory()
       } catch {
         DOM.alert(error.message)
       }
     }
+  }
+
+  func delete(_ item: String) {
+    Task {
+      do {
+        let itemPath = pathString + "/" + item
+        try await clientApi.delete(path: itemPath)
+        try await fetchCurrentDirectory()
+      } catch {
+        DOM.alert(error.message)
+      }
+    }
+  }
+
+  private func fetchCurrentDirectory() async throws {
+    let response = try await clientApi.folderListing(pathString)
+    folders = response.directories
+    files = response.files
   }
 }

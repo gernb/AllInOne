@@ -3,6 +3,7 @@
 @MainActor
 enum DOM {
   static let doc = JSObject.global.document
+  static let window = JSObject.global.window
   static let jsAlert = JSObject.global.alert.function!
 
   @discardableResult

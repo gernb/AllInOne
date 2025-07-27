@@ -96,8 +96,9 @@ struct FileController: Sendable {
     guard fileManager.fileExists(atPath: url.path(), isDirectory: nil) else {
       throw HTTPError(.notFound)
     }
+    let isDirectory = try url.isDirectory()
     try fileManager.removeItem(at: url)
-    if try url.isDirectory() {
+    if isDirectory {
       context.logger.info("Deleted folder: \(path)")
     } else {
       context.logger.info("Deleted file: \(path)")
