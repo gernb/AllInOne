@@ -11,7 +11,7 @@ https://browsersync.io/docs
 
 ## Attributions
 
-(Folder icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/folder]
-(Download icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/download]
-(Fire icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/fire]
+(Folder icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/folder] \
+(Download icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/download] \
+(Fire icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/fire] \
 (Back icons created by Freepik - Flaticon)[https://www.flaticon.com/free-icons/back]
