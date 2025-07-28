@@ -15,3 +15,4 @@ https://browsersync.io/docs
 [Download icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/download) <br>
 [Fire icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/fire) <br>
 [Back icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/back) <br>
+[Synchronization icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/synchronization) <br>

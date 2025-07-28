@@ -9,7 +9,21 @@ final class MainView: View {
   var body: JSValue {
     let body = DOM.create("div")
 
-    let pathLabel = DOM.addNew("h2", to: body)
+    let pathLabel = DOM.create("h2") {
+      $0.style = "display: flex; flex-grow: 1;"
+    }
+
+    DOM.addNew("div", to: body) { div in
+      div.style = "display: flex; max-width: 350px; align-items: center;"
+      DOM.addElement(pathLabel, to: div)
+      DOM.addNew("img", to: div) {
+        $0.src = "/synchronize.png"
+        $0.height = 30
+        $0.onClick { [model] in
+          model.fetchCurrentDirectory()
+        }
+      }
+    }
 
     let backButton = DOM.addNew("img", to: body) {
       $0.src = "/back.png"
@@ -157,8 +171,8 @@ final class MainViewModel {
     Task {
       do {
         guard let response = try await clientApi.fetch(path: fullPath(for: file))?.response,
-              let obj = response.blob().object,
-              let blob = try await JSPromise(obj)?.value
+          let obj = response.blob().object,
+          let blob = try await JSPromise(obj)?.value
         else {
           struct UnexpectedError: Swift.Error {}
           throw UnexpectedError()
