@@ -9,6 +9,7 @@ struct ClientAPI: Sendable {
   }
 
   var folderListing: @Sendable (_ path: String) async throws -> FolderListingResponse
+  var fetch: @Sendable (_ path: String, _ etag: String?) async throws -> (response: JSValue, etag: String)?
   var fetchFile: @Sendable (_ path: String, _ etag: String?) async throws -> (data: Data, etag: String)?
   var fetchJson: @Sendable (_ path: String, _ etag: String?) async throws -> (json: JSValue, etag: String)?
 
@@ -18,6 +19,9 @@ struct ClientAPI: Sendable {
 }
 
 extension ClientAPI {
+  func fetch(path: String, ifNotMatching etag: String? = nil) async throws -> (response: JSValue, etag: String)? {
+    try await fetch(path, etag)
+  }
   func fetch(path: String, ifNotMatching etag: String? = nil) async throws -> (data: Data, etag: String)? {
     try await fetchFile(path, etag)
   }
@@ -52,6 +56,9 @@ extension ClientAPI {
         throw Error.unknown
       }
       return try JSValueDecoder().decode(FolderListingResponse.self, from: json)
+    },
+    fetch: { path, currentEtag in
+      try await jsFetch(baseUrl + path, etag: currentEtag)
     },
     fetchFile: { path, currentEtag in
       guard let (resp, etag) = try await jsFetch(baseUrl + path, etag: currentEtag) else {

@@ -53,7 +53,7 @@ final class MainView: View {
         }
         for file in model.files {
           let item = ListItem(file) {
-            DOM.alert("'\(file)' tapped")
+            model.download(file: file)
           } trashTapped: {
             let confirmed = DOM.window.confirm("Do you want to delete '\(file)'?").boolean!
             if confirmed {
@@ -134,8 +134,7 @@ final class MainViewModel {
   func delete(_ item: String) {
     Task {
       do {
-        let itemPath = pathString + "/" + item
-        try await clientApi.delete(path: itemPath)
+        try await clientApi.delete(path: fullPath(for: item))
         try await fetchCurrentDirectory()
       } catch {
         DOM.alert(error.message)
@@ -146,12 +145,38 @@ final class MainViewModel {
   func createFolder(_ name: String) {
     Task {
       do {
-        try await clientApi.createFolder(at: pathString + "/" + name)
+        try await clientApi.createFolder(at: fullPath(for: name))
         try await fetchCurrentDirectory()
       } catch {
         DOM.alert(error.message)
       }
     }
+  }
+
+  func download(file: String) {
+    Task {
+      do {
+        guard let response = try await clientApi.fetch(path: fullPath(for: file))?.response,
+              let obj = response.blob().object,
+              let blob = try await JSPromise(obj)?.value
+        else {
+          struct UnexpectedError: Swift.Error {}
+          throw UnexpectedError()
+        }
+        let href = DOM.createObjectURL(blob)
+        let link = DOM.create("a") {
+          $0.href = href
+          $0.download = .string(file)
+        }
+        _ = link.click()
+      } catch {
+        DOM.alert(error.message)
+      }
+    }
+  }
+
+  private func fullPath(for item: String) -> String {
+    pathString + "/" + item
   }
 
   private func fetchCurrentDirectory() async throws {

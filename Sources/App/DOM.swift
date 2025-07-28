@@ -5,6 +5,7 @@ enum DOM {
   static let doc = JSObject.global.document
   static let window = JSObject.global.window
   static let jsAlert = JSObject.global.alert.function!
+  static let createObjectURL = JSObject.global.URL.function!.createObjectURL!
 
   @discardableResult
   static func addNew(
@@ -71,3 +72,5 @@ extension JSValue {
     )
   }
 }
+
+extension JSValue: @retroactive @unchecked Sendable {}
