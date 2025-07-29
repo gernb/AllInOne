@@ -6,6 +6,8 @@ enum DOM {
   static let window = JSObject.global.window
   static let jsAlert = JSObject.global.alert.function!
   static let createObjectURL = JSObject.global.URL.function!.createObjectURL!
+  static let Date = JSObject.global.Date.function!
+  static let tzOffset = -DOM.Date.new().jsValue.getTimezoneOffset().number!
 
   @discardableResult
   static func addNew(

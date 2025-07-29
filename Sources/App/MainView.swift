@@ -35,6 +35,8 @@ final class MainView: View {
     }
 
     let list = DOM.addNew("div", to: body)
+    let timestampLabel = DOM.addNew("span", to: body)
+    DOM.addNew("br", to: body)
 
     let dialog = DOM.addNew("dialog", to: body, builder: createFolderDialog)
     dialog.on("close") { [model] in
@@ -43,14 +45,42 @@ final class MainView: View {
       }
     }
     DOM.addNew("button", to: body) {
+      $0.style = "margin: 5px 0;"
       $0.innerText = "Create New Folder"
       $0.onClick {
         _ = dialog.showModal()
       }
     }
 
+    DOM.addNew("br", to: body)
+    let fileInput = DOM.addNew("input", to: body) { input in
+      input.style = "display: none;"
+      input.type = "file"
+      input.on("change") { [model] in
+        guard let files = input.object?.files,
+              files.length == 1,
+              let file = files[0].object
+        else {
+          DOM.alert("There was an unexpected issue preparing your file.")
+          return
+        }
+        model.upload(file)
+      }
+    }
+    DOM.addNew("button", to: body) {
+      $0.style = "margin: 5px 0;"
+      $0.innerText = "Upload File"
+      $0.onClick {
+        _ = fileInput.click()
+      }
+    }
+
     observe { [model] in
       pathLabel.innerText = .string(model.pathString)
+      if let timestamp = model.lastFetchTimestamp {
+        let value = timestamp.formatted(date: .abbreviated, time: .standard)
+        timestampLabel.innerText = .string("Last updated: \(value)")
+      }
       backButton.style = model.path.isEmpty ? "display: none;" : "display: inline;"
 
       DOM.addNew("div", to: list, replace: true) { list in
@@ -115,87 +145,5 @@ final class MainView: View {
         }
       }
     }
-  }
-}
-
-@MainActor
-@Perceptible
-final class MainViewModel {
-  var path: [String] = [] {
-    didSet {
-      fetchCurrentDirectory()
-    }
-  }
-  private(set) var folders: [String] = []
-  private(set) var files: [String] = []
-
-  var pathString: String {
-    "/" + path.joined(separator: "/")
-  }
-
-  private let clientApi = ClientAPI.live
-
-  func fetchCurrentDirectory() {
-    Task {
-      do {
-        try await fetchCurrentDirectory()
-      } catch {
-        DOM.alert(error.message)
-      }
-    }
-  }
-
-  func delete(_ item: String) {
-    Task {
-      do {
-        try await clientApi.delete(path: fullPath(for: item))
-        try await fetchCurrentDirectory()
-      } catch {
-        DOM.alert(error.message)
-      }
-    }
-  }
-
-  func createFolder(_ name: String) {
-    Task {
-      do {
-        try await clientApi.createFolder(at: fullPath(for: name))
-        try await fetchCurrentDirectory()
-      } catch {
-        DOM.alert(error.message)
-      }
-    }
-  }
-
-  func download(file: String) {
-    Task {
-      do {
-        guard let response = try await clientApi.fetch(path: fullPath(for: file))?.response,
-          let obj = response.blob().object,
-          let blob = try await JSPromise(obj)?.value
-        else {
-          struct UnexpectedError: Swift.Error {}
-          throw UnexpectedError()
-        }
-        let href = DOM.createObjectURL(blob)
-        let link = DOM.create("a") {
-          $0.href = href
-          $0.download = .string(file)
-        }
-        _ = link.click()
-      } catch {
-        DOM.alert(error.message)
-      }
-    }
-  }
-
-  private func fullPath(for item: String) -> String {
-    pathString + "/" + item
-  }
-
-  private func fetchCurrentDirectory() async throws {
-    let response = try await clientApi.folderListing(pathString)
-    folders = response.directories
-    files = response.files
   }
 }
