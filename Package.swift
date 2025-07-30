@@ -49,6 +49,9 @@ let package = Package(
         .product(name: "JavaScriptKit", package: "JavaScriptKit"),
         .product(name: "SwiftNavigation", package: "swift-navigation"),
       ],
+      // swiftSettings: [ // requires swift 6.2
+      //   .defaultIsolation(MainActor.self),
+      // ]
     ),
   ]
 )
