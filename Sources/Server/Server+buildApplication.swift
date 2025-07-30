@@ -14,17 +14,19 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
     return logger
   }()
   let router = try buildRouter(logger: logger, dataPath: arguments.dataPath)
-  let app = Application(
+  var app = Application(
     router: router,
     configuration: .init(
       address: .hostname(arguments.hostname, port: arguments.port),
       serverName: arguments.serverName
     ),
-    onServerRunning: { [port = arguments.port] _ in
-      browserSyncReload(port: port)
-    },
     logger: logger
   )
+  #if DEBUG
+  app.addServices(
+    BrowserSyncService(port: arguments.port, logger: logger)
+  )
+  #endif
   return app
 }
 

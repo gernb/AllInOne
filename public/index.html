@@ -6,14 +6,19 @@
     <title>App</title>
   </head>
 
-  <body>
+  <body style="background-color: Canvas; color: CanvasText; color-scheme: dark light;">
     <script type="module">
+      const loading = document.querySelector("#loading");
+      loading.style.height = window.innerHeight + "px";
+      window.onresize = function() {
+        loading.style.height = window.innerHeight + "px";
+      };
       import { init } from "./app/index.js";
       init();
     </script>
 
-    <div style="display: flex; justify-content: center; align-items: center;">
-      <p>Loading…</p>
+	  <div id="loading" style="display: flex; justify-content: center; align-items: center;">
+		  Loading…
     </div>
   </body>
 </html>

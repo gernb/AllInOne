@@ -76,3 +76,4 @@ extension JSValue {
 }
 
 extension JSValue: @retroactive @unchecked Sendable {}
+extension JSPromise: @retroactive @unchecked Sendable {}
