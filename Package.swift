@@ -9,7 +9,7 @@ let package = Package(
   ],
   products: [
     .executable(name: "server", targets: ["Server"]),
-    .executable(name: "app", targets: ["App"]),
+    .executable(name: "app-basic", targets: ["AppBasic"]),
   ],
   dependencies: [
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
@@ -50,7 +50,7 @@ let package = Package(
       ]
     ),
     .executableTarget(
-      name: "App",
+      name: "AppBasic",
       dependencies: [
         "AppShared",
         .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),

@@ -89,6 +89,24 @@
       "name": "Release app",
       "program": "${workspaceFolder:AllInOne}/.build/release/app",
       "preLaunchTask": "swift: Build Release app"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug app-basic",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/app-basic",
+      "preLaunchTask": "swift: Build Debug app-basic"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release app-basic",
+      "program": "${workspaceFolder:AllInOne}/.build/release/app-basic",
+      "preLaunchTask": "swift: Build Release app-basic"
     }
   ]
 }

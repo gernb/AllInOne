@@ -6,6 +6,5 @@ DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
-/public/css
-/public/app
+/public/app-basic
 /data

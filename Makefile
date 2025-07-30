@@ -10,10 +10,12 @@ CONFIGURATION = $(CONFIG)
 
 .PHONY: help
 help:
-	@echo "Possible targets: app, server, container"
+	@echo "Possible targets: apps, appbasic, server, container"
 
-app:
-	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app -c ${CONFIGURATION} --output public/app
+apps: appbasic
+
+appbasic:
+	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app-basic -c ${CONFIGURATION} --output public/app-basic
 
 sync:
 	browser-sync reload
@@ -21,13 +23,13 @@ sync:
 server:
 	swift build -c ${CONFIGURATION} --product server
 
-runserver: server
+run:
 	swift run -c ${CONFIGURATION} server -p ${DEVPORT} 
 
 watch:
-	watchexec -w Sources/App -e .swift -r 'make app sync' & make runserver
+	watchexec -w Sources/AppBasic -e .swift -r 'make apps sync' & make run
 
-container: app
+container: apps
 	swift build --swift-sdk ${CONTAINERSDK} --triple aarch64-swift-linux-musl -c ${CONFIGURATION} --product server
 	sudo docker build -t ${REPOSITORY}/${TAG} .
 	sudo docker push ${REPOSITORY}/${TAG}
