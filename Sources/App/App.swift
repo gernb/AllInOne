@@ -1,3 +1,4 @@
+import AppShared
 import JavaScriptEventLoop
 
 @MainActor
@@ -8,11 +9,5 @@ struct App {
   static func main() {
     JavaScriptEventLoop.installGlobalExecutor()
     DOM.addView(mainView, to: DOM.doc.body, replace: true)
-  }
-}
-
-extension Error {
-  var message: String {
-    String(describing: self)
   }
 }

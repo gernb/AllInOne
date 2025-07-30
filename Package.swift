@@ -10,7 +10,6 @@ let package = Package(
   products: [
     .executable(name: "server", targets: ["Server"]),
     .executable(name: "app", targets: ["App"]),
-    .library(name: "Shared", targets: ["Shared"]),
   ],
   dependencies: [
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
@@ -41,10 +40,19 @@ let package = Package(
         .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
       ]
     ),
+    .target(
+      name: "AppShared",
+      dependencies: [
+        "Shared",
+        .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
+        .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+        .product(name: "SwiftNavigation", package: "swift-navigation"),
+      ]
+    ),
     .executableTarget(
       name: "App",
       dependencies: [
-        "Shared",
+        "AppShared",
         .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
         .product(name: "JavaScriptKit", package: "JavaScriptKit"),
         .product(name: "SwiftNavigation", package: "swift-navigation"),

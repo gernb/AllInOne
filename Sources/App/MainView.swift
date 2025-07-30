@@ -1,3 +1,4 @@
+import AppShared
 @preconcurrency import JavaScriptKit
 import SwiftNavigation
 

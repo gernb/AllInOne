@@ -7,7 +7,7 @@ https://book.swiftwasm.org/getting-started/setup.html
 https://github.com/watchexec/watchexec <br>
 https://browsersync.io/docs
 
-./watch.sh
+Uses Makefile for building app, server, and container image.
 
 ## Attributions
 

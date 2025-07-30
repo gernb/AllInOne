@@ -1,26 +1,29 @@
 import Foundation
+import JavaScriptEventLoop
 @preconcurrency import JavaScriptKit
 import SwiftNavigation
 
 @MainActor
 @Perceptible
-final class MainViewModel {
-  var path: [String] = [] {
+public final class MainViewModel {
+  public var path: [String] = [] {
     didSet {
       fetchCurrentDirectory()
     }
   }
-  private(set) var lastFetchTimestamp: Date?
-  private(set) var folders: [String] = []
-  private(set) var files: [String] = []
+  public private(set) var lastFetchTimestamp: Date?
+  public private(set) var folders: [String] = []
+  public private(set) var files: [String] = []
 
-  var pathString: String {
+  public var pathString: String {
     "/" + path.joined(separator: "/")
   }
 
   private let clientApi = ClientAPI.live
 
-  func fetchCurrentDirectory() {
+  public init() {}
+
+  public func fetchCurrentDirectory() {
     Task {
       do {
         try await fetchCurrentDirectory()
@@ -30,7 +33,7 @@ final class MainViewModel {
     }
   }
 
-  func delete(_ item: String) {
+  public func delete(_ item: String) {
     Task {
       do {
         try await clientApi.delete(path: fullPath(for: item))
@@ -41,7 +44,7 @@ final class MainViewModel {
     }
   }
 
-  func createFolder(_ name: String) {
+  public func createFolder(_ name: String) {
     Task {
       do {
         try await clientApi.createFolder(at: fullPath(for: name))
@@ -52,7 +55,7 @@ final class MainViewModel {
     }
   }
 
-  func download(file: String) {
+  public func download(file: String) {
     Task {
       do {
         guard let response = try await clientApi.fetch(path: fullPath(for: file))?.response,
@@ -73,7 +76,7 @@ final class MainViewModel {
     }
   }
 
-  func upload(_ file: JSObject) {
+  public func upload(_ file: JSObject) {
     guard let name = file.name.string else {
       DOM.alert("Unable to determine the file's name")
       return
