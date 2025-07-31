@@ -8,16 +8,14 @@
 
   <body style="background-color: Canvas; color: CanvasText; color-scheme: dark light;">
     <script type="module">
-      import { init } from "./app-basic/index.js";
-      init();
-    </script>
-    <script>
       function keepCentered() {
         const centered = document.querySelector("#centered");
         centered.style.height = window.innerHeight + "px";
       }
       window.onload = keepCentered
       window.onresize = keepCentered
+      import { init } from "/app-basic/index.js";
+      init();
     </script>
     <div id="centered" style="display: flex; justify-content: center; align-items: center;">
       Loading…

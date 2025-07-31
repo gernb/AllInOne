@@ -15,7 +15,7 @@ struct ListItem: View {
     trashTapped: @escaping () -> Void = {}
   ) {
     self.label = label
-    self.image = isFolder ? "/folder.png" : "/file.png"
+    self.image = DOM.locationPath + (isFolder ? "/folder.png" : "/file.png")
     self.itemTapped = itemTapped
     self.trashTapped = trashTapped
   }
@@ -38,7 +38,7 @@ struct ListItem: View {
       }
 
       DOM.addNew("img", to: body) {
-        $0.src = "/trash-can.png"
+        $0.src = .string(DOM.locationPath + "/trash-can.png")
         $0.height = 40
         $0.onClick(trashTapped)
       }

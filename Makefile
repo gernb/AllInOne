@@ -42,4 +42,6 @@ container: apps
 
 clean:
 	swift package clean
+	rm -rf public/app-basic
+	rm -rf public/app-fancy
 

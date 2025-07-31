@@ -27,7 +27,7 @@ final class MainView: View {
       div.style = .string("display: flex; align-items: center; width: \(Constants.width)px;")
       DOM.addElement(pathLabel, to: div)
       DOM.addNew("img", to: div) {
-        $0.src = "/synchronize.png"
+        $0.src = .string(DOM.locationPath + "/synchronize.png")
         $0.height = 30
         $0.onClick { [model] in
           model.fetchCurrentDirectory()
@@ -36,7 +36,7 @@ final class MainView: View {
     }
 
     let backButton = DOM.addNew("img", to: content) {
-      $0.src = "/back.png"
+      $0.src = .string(DOM.locationPath + "/back.png")
       $0.height = 40
       $0.style = "display: none;"
       $0.onClick { [model] in

@@ -9,6 +9,10 @@ public enum DOM {
   public static let Date = JSObject.global.Date.function!
   public static let tzOffset = -DOM.Date.new().jsValue.getTimezoneOffset().number!
 
+  public static var locationPath: String {
+    window.location.pathname.string ?? "/"
+  }
+
   @discardableResult
   public static func addNew(
     _ element: String,
