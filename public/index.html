@@ -8,16 +8,51 @@
 
   <body style="background-color: Canvas; color: CanvasText; color-scheme: dark light;">
     <script type="module">
-      const loading = document.querySelector("#loading");
-      loading.style.height = window.innerHeight + "px";
-      window.onresize = function() {
-        loading.style.height = window.innerHeight + "px";
-      };
-      import { init } from "./app-basic/index.js";
-      init();
+      import { init as initBasic } from "./app-basic/index.js";
+      import { init as initFancy } from "./app-fancy/index.js";
+      window.initBasic = initBasic;
+      window.initFancy = initFancy;
     </script>
-    <div id="loading" style="display: flex; justify-content: center; align-items: center;">
-      Loading…
+    <script>
+      window.onload = function() {
+        const centered = document.querySelector("#centered");
+        centered.style.height = window.innerHeight + "px";
+      }
+      window.onresize = function() {
+        const centered = document.querySelector("#centered");
+        centered.style.height = window.innerHeight + "px";
+      };
+      function loadApp(init) {
+        const options = document.querySelector("#options");
+        const loading = document.querySelector("#loading");
+        options.style.display = "none";
+        loading.style.display = "block";
+        init();
+      }
+    </script>
+    <style>
+      .option {
+        cursor: pointer;
+        height: 40px;
+        min-width: 80px;
+        padding: 10px;
+        margin: 10px;;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: darkgreen;
+        color: white;
+        border-radius: 8px;
+      }
+    </style>
+    <div id="centered" style="display: flex; justify-content: center; align-items: center;">
+      <div id="loading", style="display: none;">
+        Loading…
+      </div>
+      <div id="options">
+        <div onclick="loadApp(initBasic)" class="option">Basic</div>
+        <div onclick="loadApp(initFancy)" class="option">Fancy</div>
+      </div>
     </div>
   </body>
 </html>

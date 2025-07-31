@@ -10,6 +10,7 @@ let package = Package(
   products: [
     .executable(name: "server", targets: ["Server"]),
     .executable(name: "app-basic", targets: ["AppBasic"]),
+    .executable(name: "app-fancy", targets: ["AppFancy"]),
   ],
   dependencies: [
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
@@ -51,6 +52,18 @@ let package = Package(
     ),
     .executableTarget(
       name: "AppBasic",
+      dependencies: [
+        "AppShared",
+        .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
+        .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+        .product(name: "SwiftNavigation", package: "swift-navigation"),
+      ],
+      // swiftSettings: [ // requires swift 6.2
+      //   .defaultIsolation(MainActor.self),
+      // ]
+    ),
+    .executableTarget(
+      name: "AppFancy",
       dependencies: [
         "AppShared",
         .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),

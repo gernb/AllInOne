@@ -10,12 +10,15 @@ CONFIGURATION = $(CONFIG)
 
 .PHONY: help
 help:
-	@echo "Possible targets: apps, appbasic, server, container"
+	@echo "Possible targets: apps, appbasic, appfancy, server, container"
 
-apps: appbasic
+apps: appbasic appfancy
 
 appbasic:
 	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app-basic -c ${CONFIGURATION} --output public/app-basic
+
+appfancy:
+	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app-fancy -c ${CONFIGURATION} --output public/app-fancy
 
 sync:
 	browser-sync reload
@@ -27,7 +30,7 @@ run:
 	swift run -c ${CONFIGURATION} server -p ${DEVPORT} 
 
 watch:
-	watchexec -w Sources/AppBasic -e .swift -r 'make apps sync' & make run
+	watchexec -w Sources/AppBasic -w Sources/AppFancy -e .swift -r 'make apps sync' & make run
 
 container: apps
 	swift build --swift-sdk ${CONTAINERSDK} --triple aarch64-swift-linux-musl -c ${CONFIGURATION} --product server

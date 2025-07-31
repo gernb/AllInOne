@@ -107,6 +107,60 @@
       "name": "Release app-basic",
       "program": "${workspaceFolder:AllInOne}/.build/release/app-basic",
       "preLaunchTask": "swift: Build Release app-basic"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug AppFancy",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/AppFancy",
+      "preLaunchTask": "swift: Build Debug AppFancy"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release AppFancy",
+      "program": "${workspaceFolder:AllInOne}/.build/release/AppFancy",
+      "preLaunchTask": "swift: Build Release AppFancy"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug app-",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/app-",
+      "preLaunchTask": "swift: Build Debug app-"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release app-",
+      "program": "${workspaceFolder:AllInOne}/.build/release/app-",
+      "preLaunchTask": "swift: Build Release app-"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Debug app-fancy",
+      "program": "${workspaceFolder:AllInOne}/.build/debug/app-fancy",
+      "preLaunchTask": "swift: Build Debug app-fancy"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:AllInOne}",
+      "name": "Release app-fancy",
+      "program": "${workspaceFolder:AllInOne}/.build/release/app-fancy",
+      "preLaunchTask": "swift: Build Release app-fancy"
     }
   ]
 }
