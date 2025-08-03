@@ -1,7 +1,6 @@
 import AppShared
 import JavaScriptKit
 
-@MainActor
 struct ListItem: View {
   private let label: String
   private let image: String
@@ -20,7 +19,7 @@ struct ListItem: View {
     self.trashTapped = trashTapped
   }
 
-  var body: JSValue {
+  func render() -> JSValue {
     DOM.create("div") { body in
       body.style = "display: flex; margin: 10px 0; max-width: 350px;"
 
@@ -43,5 +42,13 @@ struct ListItem: View {
         $0.onClick(trashTapped)
       }
     }
+  }
+
+  func onAdded() {
+    print("[ListItem] '\(label)' added")
+  }
+
+  func onRemoved() {
+    print("[ListItem] '\(label)' removed")
   }
 }

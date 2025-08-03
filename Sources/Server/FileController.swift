@@ -14,13 +14,13 @@ struct FileController: Sendable {
   init(dataPath: String) throws {
     let cwd = fileManager.currentDirectoryPath
     self.baseUrl = URL(filePath: cwd).appending(path: dataPath)
-    if fileManager.fileExists(atPath: baseUrl.path(), isDirectory: nil) == false {
+    if fileManager.fileExists(atPath: baseUrl.path(percentEncoded: false), isDirectory: nil) == false {
       try fileManager.createDirectory(at: baseUrl, withIntermediateDirectories: true)
     } else if try baseUrl.isDirectory() == false {
       struct ConfigError: Swift.Error {
         let message: String
       }
-      throw ConfigError(message: "Unable to write files to '\(baseUrl.path())'")
+      throw ConfigError(message: "Unable to write files to '\(baseUrl.path(percentEncoded: false))'")
     }
   }
 
@@ -33,9 +33,9 @@ struct FileController: Sendable {
 
   @Sendable
   private func download(_ request: Request, context: some RequestContext) async throws -> Response {
-    let path = "/" + context.parameters.getCatchAll().joined(separator: "/")
+    let path = try path(from: context)
     let url = baseUrl.appending(path: path)
-    guard fileManager.fileExists(atPath: url.path(), isDirectory: nil) else {
+    guard fileManager.fileExists(atPath: url.path(percentEncoded: false), isDirectory: nil) else {
       throw HTTPError(.notFound)
     }
     if try url.isDirectory() {
@@ -52,7 +52,7 @@ struct FileController: Sendable {
         }
       }
       let body = try await fileIO.loadFile(
-        path: url.path(),
+        path: url.path(percentEncoded: false),
         context: context
       )
       return try .init(
@@ -65,8 +65,8 @@ struct FileController: Sendable {
 
   @Sendable
   private func upload(_ request: Request, context: some RequestContext) async throws -> UploadResponse {
-    let path = "/" + context.parameters.getCatchAll().joined(separator: "/")
-    let url = baseUrl.appending(path: path)
+   let path = try path(from: context)
+   let url = baseUrl.appending(path: path)
     let isFolder = request.uri.queryParameters.has("isDirectory")
     if isFolder {
       context.logger.info("Creating directory: \(path)")
@@ -74,14 +74,14 @@ struct FileController: Sendable {
     } else {
       let folder = url.deletingLastPathComponent()
       try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-      if fileManager.fileExists(atPath: url.path()) {
+      if fileManager.fileExists(atPath: url.path(percentEncoded: false)) {
         context.logger.info("Removing existing file: \(path)")
         try fileManager.removeItem(at: url)
       }
       context.logger.info("Writing file to: \(path)")
       try await fileIO.writeFile(
         contents: request.body,
-        path: url.path(),
+        path: url.path(percentEncoded: false),
         context: context
       )
     }
@@ -91,9 +91,9 @@ struct FileController: Sendable {
 
   @Sendable
   private func delete(_ request: Request, context: some RequestContext) async throws -> Response {
-    let path = "/" + context.parameters.getCatchAll().joined(separator: "/")
+    let path = try path(from: context)
     let url = baseUrl.appending(path: path)
-    guard fileManager.fileExists(atPath: url.path(), isDirectory: nil) else {
+    guard fileManager.fileExists(atPath: url.path(percentEncoded: false), isDirectory: nil) else {
       throw HTTPError(.notFound)
     }
     let isDirectory = try url.isDirectory()
@@ -122,6 +122,17 @@ extension FileController {
     return FolderListingResponse(status: 0, files: files, directories: folders)
   }
 
+  private func path(from context: some RequestContext) throws -> String {
+      try "/" + context.parameters.getCatchAll()
+        .map {
+          guard let decoded = $0.removingPercentEncoding else {
+            throw HTTPError(.badRequest)
+          }
+          return decoded
+        }
+        .joined(separator: "/")
+  }
+
   private func headers(for url: URL) throws -> HTTPFields {
     return [
       .contentDisposition: "attachment;filename=\"\(url.lastPathComponent)\"",
@@ -130,7 +141,7 @@ extension FileController {
   }
 
   private func etag(for url: URL) throws -> String {
-    let attrs = try? fileManager.attributesOfItem(atPath: url.path())
+    let attrs = try? fileManager.attributesOfItem(atPath: url.path(percentEncoded: false))
     let modDate = (attrs?[.modificationDate] as? Date) ?? .now
     let size = (attrs?[.size] as? Int) ?? 0
     let md5 = try MD5(hashing: encoder.encode(["modDate": Int(modDate.timeIntervalSince1970), "size": size]))

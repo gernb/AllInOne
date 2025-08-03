@@ -22,11 +22,11 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
     ),
     logger: logger
   )
-  #if DEBUG
-  app.addServices(
-    BrowserSyncService(port: arguments.port, logger: logger)
-  )
-  #endif
+  if arguments.browserSync {
+    app.addServices(
+      BrowserSyncService(port: arguments.port, logger: logger)
+    )
+  }
   return app
 }
 

@@ -27,10 +27,13 @@ server:
 	swift build -c ${CONFIGURATION} --product server
 
 run:
-	swift run -c ${CONFIGURATION} server -p ${DEVPORT} 
+	swift run -c ${CONFIGURATION} server -p ${DEVPORT}
+
+runWithSync:
+	swift run -c ${CONFIGURATION} server -p ${DEVPORT} -b
 
 watch:
-	watchexec -w Sources/AppBasic -w Sources/AppFancy -e .swift -r 'make apps sync' & make run
+	watchexec -w Sources/AppBasic -w Sources/AppFancy -e .swift -r 'make apps sync' & make runWithSync
 
 container: apps
 	swift build --swift-sdk ${CONTAINERSDK} --triple aarch64-swift-linux-musl -c ${CONFIGURATION} --product server

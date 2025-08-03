@@ -18,6 +18,9 @@ struct Server: AsyncParsableCommand, AppArguments {
   @Option(name: .shortAndLong)
   var dataPath: String = "data"
 
+  @Flag(name: .shortAndLong)
+  var browserSync = false
+
   func run() async throws {
     let app = try await buildApplication(self)
     try await app.runService()
@@ -30,6 +33,7 @@ protocol AppArguments {
   var port: Int { get }
   var logLevel: Logger.Level? { get }
   var dataPath: String { get }
+  var browserSync: Bool { get }
 }
 
 extension Logger.Level: @retroactive ExpressibleByArgument {}
