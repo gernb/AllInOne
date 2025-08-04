@@ -104,11 +104,11 @@ public extension View {
   func onRemoved() {}
 }
 
-protocol ConvertibleToJSObject {
+public protocol ConvertibleToJSObject {
   func jsObject() -> JSObject
 }
 extension Dictionary: ConvertibleToJSObject where Key == String {
-  func jsObject() -> JSObject {
+  public func jsObject() -> JSObject {
     let result = JSObject()
     for (key, value) in self {
       switch value {
@@ -118,12 +118,14 @@ extension Dictionary: ConvertibleToJSObject where Key == String {
         result[key] = JSValue(integerLiteral: value)
       case let value as Double:
         result[key] = JSValue(floatLiteral: value)
+      case let value as Bool:
+        result[key] = .boolean(value)
+      case let value as JSObject:
+        result[key] = .object(value)
       case let value as ConvertibleToJSObject:
         result[key] = value.jsObject().jsValue
       case let value as JSValue:
         result[key] = value
-      case let value as Bool:
-        result[key] = .boolean(value)
       default:
         print(key, value)
         fatalError()
