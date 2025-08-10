@@ -55,7 +55,7 @@ struct MainView: View {
         let fileInput = DOM.addNew("input", to: content) { input in
           input.style = "display: none;"
           input.type = "file"
-          input.on("change") { [model] in
+          input.event("change") { [model] in
             guard let files = input.object?.files,
               files.length == 1,
               let file = files[0].object
@@ -76,7 +76,7 @@ struct MainView: View {
       }
 
       DOM.addElement(dialog, to: body)
-      dialog.on("close") {
+      dialog.event("close") {
         if let folderName = dialog.returnValue.string, folderName.isEmpty == false {
           model.createFolder(folderName)
         }

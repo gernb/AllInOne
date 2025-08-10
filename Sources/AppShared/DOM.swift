@@ -57,7 +57,7 @@ public enum DOM {
       img.height = 0
       img.src = ""
       img.loading = "lazy"
-      img.on("error") {
+      img.event("error") {
         _ = img.remove()
         view.onAdded()
       }
@@ -145,7 +145,7 @@ public extension JSValue {
       )
   }
 
-  func on(_ event: String, _ handler: @escaping () -> Void) {
+  func event(_ event: String, _ handler: @escaping () -> Void) {
     _ = self.addEventListener(
       event,
       JSClosure { _ in

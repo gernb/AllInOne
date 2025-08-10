@@ -83,7 +83,7 @@ public final class MainViewModel {
     }
     let path = fullPath(for: name)
     let fileReader = JSObject.global.FileReader.function!.new().jsValue
-    fileReader.on("load") { [weak self] in
+    fileReader.event("load") { [weak self] in
       let bytesArray = JSObject.global.Uint8Array.function!.new(fileReader.result)
       let fileData = JSTypedArray<UInt8>(unsafelyWrapping: bytesArray).withUnsafeBytes(
         Data.init(buffer:))
@@ -97,7 +97,7 @@ public final class MainViewModel {
         }
       }
     }
-    fileReader.on("error") {
+    fileReader.event("error") {
       DOM.alert("Something went wrong")
     }
     _ = fileReader.readAsArrayBuffer(file)

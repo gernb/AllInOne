@@ -84,7 +84,7 @@ struct Page: Element {
     HTML(
       .div,
       class: .page,
-      builder: { $0[dynamicMember: "data-name"] = .string(name) },
+      builder: { $0.dataset.name = .string(name) },
       containing: content
     )
     .render()
