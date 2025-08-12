@@ -15,14 +15,7 @@
   <body>
     <div id="app">
       <div class="view view-main view-init safe-areas">
-        <div data-name="loading" class="page">
-
-          <div class="navbar">
-            <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title">Fancy App</div>
-            </div>
-          </div>
+        <div data-name="loading" class="page" id="loadingPage">
 
           <div class="page-content">
             <div class="card card-content-padding card-raised card-outline">
@@ -44,15 +37,10 @@
           name: 'Fancy App',
           darkMode: 'auto',
           colors: { primary: '#00aa00' },
-          routes: [
-            {
-              name: 'swift',
-              path: '/swift/',
-            },
-          ]
+          theme: 'ios'
         }
       );
-      </script>
+    </script>
     <script type="module">
       import { init } from "/app-fancy/index.js";
       init();

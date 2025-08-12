@@ -1,7 +1,12 @@
 import JavaScriptKit
+import SwiftNavigation
 
 extension HTMLClass {
   static let title: Self = "title"
+  static let link: Self = "link"
+  static let back: Self = "back"
+  static let icon: Self = "icon"
+  static let iconBack: Self = "icon-back"
 }
 
 // MARK: NavBar
@@ -9,6 +14,22 @@ extension HTMLClass {
 struct NavBar: Element {
   let showBackground: Bool
   let content: () -> [Element]
+
+  private static let backButtonId = "backButtonId"
+  private static let backButton = HTML(.a, classes: .link, .back) {
+    $0.href = "#"
+    $0.id = .string(backButtonId)
+  } containing: {
+    HTML(.i, classes: .icon, .iconBack)
+    HTML(.span) {
+      $0.innerText = "Back"
+    }
+  }
+
+  static func showBackButton(_ show: Bool = true) {
+    let backButton = App.doc.getElementById(NavBar.backButtonId)
+    backButton.style.display = show ? "inline" : "none"
+  }
 
   init(showBackground: Bool = true, @ElementBuilder content: @escaping () -> [Element]) {
     self.showBackground = showBackground
@@ -24,14 +45,19 @@ struct NavBar: Element {
     ]}
   }
 
-  func render() -> JSObject {
+  var body: Element {
     HTML(.div, class: .navbar) {
       if showBackground {
         HTML(.div, class: .navbarBg)
       }
-      HTML(.div, class: .navbarInner, containing: content)
+      HTML(.div, class: .navbarInner) {
+        HTML(.div, class: .left) {
+          Self.backButton
+        }
+        content()
+        HTML(.div, class: .right)
+      }
     }
-    .render()
   }
 }
 
@@ -39,6 +65,8 @@ extension HTMLClass {
   static let navbar: Self = "navbar"
   static let navbarBg: Self = "navbar-bg"
   static let navbarInner: Self = "navbar-inner"
+  static let left: Self = "left"
+  static let right: Self = "right"
 }
 
 // MARK: Card
@@ -46,11 +74,10 @@ extension HTMLClass {
 struct Card: Element {
   @ElementBuilder let content: () -> [Element]
 
-  func render() -> JSObject {
+  var body: Element {
     HTML(.div, classes: .card, .cardContentPadding, .cardRaised, .cardOutline) {
       HTML(.div, class: .cardContent, containing: content)
     }
-    .render()
   }
 }
 
@@ -62,33 +89,57 @@ extension HTMLClass {
   static let cardContent: Self = "card-content"
 }
 
-// MARK: Page
+// MARK: Button
 
-struct Page: Element {
-  let name: String
-  let content: () -> [Element]
+struct Button: Element {
+  let label: String
+  let action: () -> Void
+  let classes: [HTMLClass] = [.button, .buttonFill, .buttonRound]
 
-  init(
-    name: String,
-    @ElementBuilder controls: @escaping () -> [Element] = {[]},
-    @ElementBuilder content: @escaping () -> [Element]
-  ) {
-    self.name = name
-    let pageContent = HTML(.div, class: .pageContent, containing: content) as Element
-    self.content = {
-      controls() + [pageContent]
+  var body: Element {
+    HTML(.button, classList: classes) {
+      $0.innerText = .string(label)
+      $0.onClick(action)
     }
   }
+}
 
-  func render() -> JSObject {
+extension HTMLClass {
+  static let button: Self = "button"
+  static let buttonFill: Self = "button-fill"
+  static let buttonRound: Self = "button-round"
+}
+
+// MARK: Page
+
+@MainActor
+protocol Page: Element {
+  var name: String { get }
+  @ElementBuilder var controls: [Element] { get }
+  @ElementBuilder var content: [Element] { get }
+  func observing()
+  func observables() -> Set<ObserveToken>
+  func onAdded()
+  func onRemoved()
+}
+extension Page {
+  var controls: [Element] { [] }
+  var body: Element {
     HTML(
       .div,
       class: .page,
       builder: { $0.dataset.name = .string(name) },
-      containing: content
+      containing: {
+        controls + [
+          HTML(.div, class: .pageContent, containing: { content })
+        ]
+      }
     )
-    .render()
   }
+  func observing() {}
+  func observables() -> Set<ObserveToken> { [] }
+  func onAdded() {}
+  func onRemoved() {}
 }
 
 extension HTMLClass {

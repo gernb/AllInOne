@@ -1,7 +1,12 @@
 @preconcurrency import JavaScriptKit
 
+@MainActor
 protocol Element {
+  var body: Element { get }
   func render() -> JSObject
+}
+extension Element {
+  func render() -> JSObject { body.render() }
 }
 
 @resultBuilder
@@ -17,6 +22,9 @@ struct ElementBuilder {
   }
   static func buildExpression(_ expression: Element) -> [Element] {
     [expression]
+  }
+  static func buildExpression(_ expression: [Element]) -> [Element] {
+    expression
   }
 }
 
@@ -35,6 +43,8 @@ extension HTMLTag {
   static let p: Self = "p"
   static let br: Self = "br"
   static let a: Self = "a"
+  static let i: Self = "i"
+  static let button: Self = "button"
 }
 
 struct HTMLClass: ExpressibleByStringLiteral, RawRepresentable {
@@ -66,6 +76,21 @@ struct HTML: Element {
     self.classList = classList
     self.builder = builder
     self.contents = contents
+  }
+
+  init(
+    _ tag: HTMLTag,
+    classList: [HTMLClass],
+    builder: @escaping (JSValue) -> Void
+  ) {
+    self.init(tag, classList: classList, builder: builder, containing: Self.empty)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    classes: HTMLClass...
+  ) {
+    self.init(tag, classList: Array(classes), builder: { _ in }, containing: Self.empty)
   }
 
   init(
@@ -110,6 +135,10 @@ struct HTML: Element {
     self.init(tag, classList: `class`.map { [$0] } ?? [], builder: { _ in }, containing: contents)
   }
 
+  var body: Element {
+    fatalError("Only render() should be called on `HTML`")
+  }
+
   func render() -> JSObject {
     let node = Self.doc.createElement(tag.rawValue)
     for c in classList {
@@ -121,4 +150,8 @@ struct HTML: Element {
     }
     return node.object!
   }
+}
+
+extension Never: Element {
+  var body: Element { fatalError() }
 }
