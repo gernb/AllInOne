@@ -12,6 +12,8 @@ struct MainView: Page {
         print("Click…")
         App.navigate(to: SecondView())
       }
+      .buttonStyle(fill: .solid, shape: .round)
+      .frame(maxWidth: 150)
     }
   }
 

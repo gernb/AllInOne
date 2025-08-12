@@ -1,8 +1,23 @@
 import JavaScriptKit
 import SwiftNavigation
 
+extension Element {
+  func frame(maxWidth: Int? = nil, maxHeight: Int? = nil) -> Element {
+    guard maxWidth != nil || maxHeight != nil else { return self }
+    return HTML(.div) {
+      if let maxWidth {
+        $0.style.maxWidth = .string("\(maxWidth)px")
+      }
+      if let maxHeight {
+        $0.style.maxHeight = .string("\(maxHeight)px")
+      }
+    } containing: {
+      self
+    }
+  }
+}
+
 extension HTMLClass {
-  static let title: Self = "title"
   static let link: Self = "link"
   static let back: Self = "back"
   static let icon: Self = "icon"
@@ -66,6 +81,7 @@ extension HTMLClass {
   static let navbarBg: Self = "navbar-bg"
   static let navbarInner: Self = "navbar-inner"
   static let left: Self = "left"
+  static let title: Self = "title"
   static let right: Self = "right"
 }
 
@@ -94,7 +110,7 @@ extension HTMLClass {
 struct Button: Element {
   let label: String
   let action: () -> Void
-  let classes: [HTMLClass] = [.button, .buttonFill, .buttonRound]
+  var classes: [HTMLClass] = [.button]
 
   var body: Element {
     HTML(.button, classList: classes) {
@@ -106,8 +122,79 @@ struct Button: Element {
 
 extension HTMLClass {
   static let button: Self = "button"
+  static let buttonTonal: Self = "button-tonal"
   static let buttonFill: Self = "button-fill"
+  static let buttonOutline: Self = "button-outline"
   static let buttonRound: Self = "button-round"
+  static let buttonRaised: Self = "button-raised"
+  static let buttonSmall: Self = "button-small"
+  static let buttonLarge: Self = "button-large"
+}
+
+extension Button {
+  enum Shape {
+    case rect, round
+  }
+  enum Fill {
+    case none, tonal, solid, outline
+  }
+  enum Size {
+    case small, normal, large
+  }
+
+  func buttonStyle(
+    fill: Fill? = nil,
+    raised: Bool? = nil,
+    shape: Shape? = nil,
+    size: Size? = nil
+  ) -> Self {
+    var classes = Set(self.classes)
+    switch shape {
+    case .rect: classes.remove(.buttonRound)
+    case .round: classes.insert(.buttonRound)
+    case .none: break
+    }
+    switch fill {
+    case .some(.none):
+      classes.remove(.buttonTonal)
+      classes.remove(.buttonFill)
+      classes.remove(.buttonOutline)
+    case .tonal:
+      classes.insert(.buttonTonal)
+      classes.remove(.buttonFill)
+      classes.remove(.buttonOutline)
+    case .solid:
+      classes.remove(.buttonTonal)
+      classes.insert(.buttonFill)
+      classes.remove(.buttonOutline)
+    case .outline:
+      classes.remove(.buttonTonal)
+      classes.remove(.buttonFill)
+      classes.insert(.buttonOutline)
+    case nil:
+      break
+    }
+    switch raised {
+    case .some(true): classes.insert(.buttonRaised)
+    case .some(false): classes.remove(.buttonRaised)
+    case .none: break
+    }
+    switch size {
+    case .small:
+      classes.insert(.buttonSmall)
+      classes.remove(.buttonLarge)
+    case .normal:
+      classes.remove(.buttonSmall)
+      classes.remove(.buttonLarge)
+    case .large:
+      classes.remove(.buttonSmall)
+      classes.insert(.buttonLarge)
+    case .none: break
+    }
+    var result = self
+    result.classes = Array(classes)
+    return result
+  }
 }
 
 // MARK: Page

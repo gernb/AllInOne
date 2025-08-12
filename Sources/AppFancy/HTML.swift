@@ -47,7 +47,7 @@ extension HTMLTag {
   static let button: Self = "button"
 }
 
-struct HTMLClass: ExpressibleByStringLiteral, RawRepresentable {
+struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
   let rawValue: String
   init(stringLiteral value: StringLiteralType) {
     self.rawValue = value

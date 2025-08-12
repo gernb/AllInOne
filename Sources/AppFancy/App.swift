@@ -59,6 +59,16 @@ struct App {
         return .undefined
       }
     )
+    _ = dom7(doc).on(
+      "page:beforeremove",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        print("page:beforeremove", name)
+        pages[name] = nil
+        return .undefined
+      }
+    )
   }
 
   static func navigate(to page: Page) {
