@@ -78,6 +78,14 @@ struct HTML: Element {
     self.contents = contents
   }
 
+  init(_ tag: HTMLTag) {
+    self.init(tag, classList: [], builder: { _ in }, containing: Self.empty)
+  }
+
+  init(_ tag: HTMLTag, builder: @escaping (JSValue) -> Void) {
+    self.init(tag, classList: [], builder: builder, containing: Self.empty)
+  }
+
   init(
     _ tag: HTMLTag,
     classList: [HTMLClass],
@@ -112,27 +120,27 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    class: HTMLClass? = nil,
+    class: HTMLClass,
     builder: @escaping (JSValue) -> Void,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: `class`.map {[$0]} ?? [], builder: builder, containing: contents)
+    self.init(tag, classList: [`class`], builder: builder, containing: contents)
   }
 
   init(
     _ tag: HTMLTag,
-    class: HTMLClass? = nil,
+    class: HTMLClass,
     builder: @escaping (JSValue) -> Void
   ) {
-    self.init(tag, classList: `class`.map { [$0] } ?? [], builder: builder, containing: Self.empty)
+    self.init(tag, classList: [`class`], builder: builder, containing: Self.empty)
   }
 
   init(
     _ tag: HTMLTag,
-    class: HTMLClass? = nil,
+    class: HTMLClass,
     @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
   ) {
-    self.init(tag, classList: `class`.map { [$0] } ?? [], builder: { _ in }, containing: contents)
+    self.init(tag, classList: [`class`], builder: { _ in }, containing: contents)
   }
 
   var body: Element {

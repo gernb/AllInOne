@@ -110,14 +110,66 @@ extension HTMLClass {
 struct Button: Element {
   let label: String
   let action: () -> Void
-  var classes: [HTMLClass] = [.button]
 
   var body: Element {
-    HTML(.button, classList: classes) {
+    let classList = [
+      .button,
+      Environment[Button.Shape.self].class,
+      Environment[Button.Fill.self].class,
+      Environment[Button.Size.self].class,
+      Environment[Button.Raised.self] ? .buttonRaised : nil,
+    ].compactMap { $0 }
+    return HTML(.button, classList: classList) {
       $0.innerText = .string(label)
       $0.onClick(action)
     }
   }
+}
+
+extension Button {
+  enum Shape {
+    case rect, round
+  }
+  enum Fill {
+    case none, tonal, solid, outline
+  }
+  enum Size {
+    case small, normal, large
+  }
+  enum Raised {}
+}
+extension Button.Shape: EnvironmentKey {
+  static let defaultValue = Self.rect
+  var `class`: HTMLClass? {
+    switch self {
+    case .rect: nil
+    case .round: .buttonRound
+    }
+  }
+}
+extension Button.Fill: EnvironmentKey {
+  static let defaultValue = Self.none
+  var `class`: HTMLClass? {
+    switch self {
+    case .none: nil
+    case .tonal: .buttonTonal
+    case .solid: .buttonFill
+    case .outline: .buttonOutline
+    }
+  }
+}
+extension Button.Size: EnvironmentKey {
+  static let defaultValue = Self.normal
+  var `class`: HTMLClass? {
+    switch self {
+    case .small: .buttonSmall
+    case .normal: nil
+    case .large: .buttonLarge
+    }
+  }
+}
+extension Button.Raised: EnvironmentKey {
+  static let defaultValue = false
 }
 
 extension HTMLClass {
@@ -131,68 +183,26 @@ extension HTMLClass {
   static let buttonLarge: Self = "button-large"
 }
 
-extension Button {
-  enum Shape {
-    case rect, round
-  }
-  enum Fill {
-    case none, tonal, solid, outline
-  }
-  enum Size {
-    case small, normal, large
-  }
-
+extension Element {
   func buttonStyle(
-    fill: Fill? = nil,
+    fill: Button.Fill? = nil,
     raised: Bool? = nil,
-    shape: Shape? = nil,
-    size: Size? = nil
-  ) -> Self {
-    var classes = Set(self.classes)
-    switch shape {
-    case .rect: classes.remove(.buttonRound)
-    case .round: classes.insert(.buttonRound)
-    case .none: break
+    shape: Button.Shape? = nil,
+    size: Button.Size? = nil
+  ) -> Element {
+    var result: Element = self
+    if let fill {
+      result = result.environment(Button.Fill.self, fill)
     }
-    switch fill {
-    case .some(.none):
-      classes.remove(.buttonTonal)
-      classes.remove(.buttonFill)
-      classes.remove(.buttonOutline)
-    case .tonal:
-      classes.insert(.buttonTonal)
-      classes.remove(.buttonFill)
-      classes.remove(.buttonOutline)
-    case .solid:
-      classes.remove(.buttonTonal)
-      classes.insert(.buttonFill)
-      classes.remove(.buttonOutline)
-    case .outline:
-      classes.remove(.buttonTonal)
-      classes.remove(.buttonFill)
-      classes.insert(.buttonOutline)
-    case nil:
-      break
+    if let raised {
+      result = result.environment(Button.Raised.self, raised)
     }
-    switch raised {
-    case .some(true): classes.insert(.buttonRaised)
-    case .some(false): classes.remove(.buttonRaised)
-    case .none: break
+    if let shape {
+      result = result.environment(Button.Shape.self, shape)
     }
-    switch size {
-    case .small:
-      classes.insert(.buttonSmall)
-      classes.remove(.buttonLarge)
-    case .normal:
-      classes.remove(.buttonSmall)
-      classes.remove(.buttonLarge)
-    case .large:
-      classes.remove(.buttonSmall)
-      classes.insert(.buttonLarge)
-    case .none: break
+    if let size {
+      result = result.environment(Button.Size.self, size)
     }
-    var result = self
-    result.classes = Array(classes)
     return result
   }
 }
