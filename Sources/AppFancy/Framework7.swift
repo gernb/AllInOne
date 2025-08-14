@@ -243,3 +243,14 @@ extension HTMLClass {
   static let page: Self = "page"
   static let pageContent: Self = "page-content"
 }
+
+enum Transition: String {
+  case circle = "f7-circle"
+  case cover = "f7-cover"
+  case verticalCover = "f7-cover-v"
+  case dive = "f7-dive"
+  case fade = "f7-fade"
+  case flip = "f7-flip"
+  case parallax = "f7-parallax"
+  case push = "f7-push"
+}

@@ -16,7 +16,7 @@ struct App {
     JavaScriptEventLoop.installGlobalExecutor()
     print("Running…")
     setup()
-    navigate(to: MainView())
+    navigate(to: MainView(), transition: .flip)
   }
 
   static func setup() {
@@ -34,9 +34,11 @@ struct App {
         let name = f7page.name.string!
         print("page:beforein", name)
         // _ = JSObject.global.console.log(f7page)
-        guard var (page, tokens) = pages[name] else {
+        guard let entry = pages[name] else {
           return .undefined
         }
+        let page = entry.page
+        var tokens = entry.tokens
         tokens = [observe { page.observing() }]
         tokens.formUnion(page.observables())
         pages[name] = (page, tokens)
@@ -50,9 +52,11 @@ struct App {
         let f7page = args[1].object!
         let name = f7page.name.string!
         print("page:afterout", name)
-        guard var (page, tokens) = pages[name] else {
+        guard let entry = pages[name] else {
           return .undefined
         }
+        let page = entry.page
+        var tokens = entry.tokens
         page.onRemoved()
         tokens.removeAll()
         pages[name] = (page, tokens)
@@ -71,13 +75,20 @@ struct App {
     )
   }
 
-  static func navigate(to page: Page) {
+  static func navigate(to page: Page, transition: Transition? = nil) {
+    let options: JSObject
+    if let transition {
+      options = ["transition": transition.rawValue].jsObject()
+    } else {
+      options = [:].jsObject()
+    }
     pages[page.name] = (page, [])
     _ = f7app.views.main.router.navigate(
       [
         "url": "/swift/\(page.name)",
         "route": ["el": page.render()],
-      ].jsObject()
+      ].jsObject(),
+      options
     )
   }
 }
