@@ -122,7 +122,13 @@ struct Button: Element {
     ].compactMap { $0 }
     return HTML(.button, classList: classList) {
       $1.innerText = .string(label)
-      $1.onClick(action)
+      _ = $1.addEventListener(
+        "click",
+        JSClosure { _ in
+          action()
+          return .undefined
+        }
+      )
     }
   }
 }
@@ -269,6 +275,7 @@ struct PullToRefresh: Element {
     HTML(.div, class: .ptrPreloader) { parentNode, _ in
       assert(parentNode.className.string == HTMLClass.pageContent.rawValue)
       _ = parentNode.classList.add(HTMLClass.pagePullToRefresh.rawValue)
+      parentNode.dataset.ptrMousewheel = .boolean(true)
       _ = App.dom7(parentNode).on(
         "ptr:refresh",
         JSClosure { args in

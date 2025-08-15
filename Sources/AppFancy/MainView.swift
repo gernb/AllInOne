@@ -1,15 +1,19 @@
 import AppShared
+import Foundation
 import JavaScriptKit
+import SwiftNavigation
 
-final class MainView: Page {
+struct MainView: Page {
   let name = "main-view"
-  private let model = MainViewModel()
+  private let model: MainViewModel
 
-  private var bottomToast: JSValue?
+  init(path: String = "/") {
+    self.model = MainViewModel(path: path)
+  }
 
   var content: [Element] {
-    PullToRefresh { [weak self] in
-      try? await self?.model.fetchCurrentDirectory()
+    PullToRefresh {
+      try? await model.fetchCurrentDirectory()
     }
     Card {
       HTML(.p) {
@@ -27,19 +31,56 @@ final class MainView: Page {
   func observing() {
     if let timestamp = model.lastFetchTimestamp {
       let value = timestamp.formatted(date: .abbreviated, time: .standard)
-      _ = bottomToast?.close()
-      bottomToast = App.showToast(text: "Last updated: \(value)")
+      model.showToast(text: "Last updated: \(value)")
     }
   }
 
   func willBeAdded() {
-    NavBar.showBackButton(false)
-    model.fetchCurrentDirectory()
+    NavBar.showBackButton(model.isRoot == false)
+    Task {
+      try? await model.fetchCurrentDirectory()
+    }
   }
 
   func willBeRemoved() {
-    _ = bottomToast?.close()
-    bottomToast = nil
+    model.hideToast()
+  }
+}
+
+@Perceptible
+@MainActor
+final class MainViewModel {
+  let path: String
+  var isRoot: Bool {
+    path == "/"
+  }
+  private(set) var lastFetchTimestamp: Date?
+  private(set) var folders: [String] = []
+  private(set) var files: [String] = []
+
+  private let clientApi = ClientAPI.live
+  @PerceptionIgnored
+  private var toast: JSValue?
+
+  init(path: String) {
+    self.path = path
+  }
+
+  func fetchCurrentDirectory() async throws {
+    let response = try await clientApi.folderListing(path)
+    folders = response.directories
+    files = response.files
+    lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
+  }
+
+  func showToast(text: String) {
+    _ = toast?.close()
+    toast = App.showToast(text: text)
+  }
+
+  func hideToast() {
+    _ = toast?.close()
+    toast = nil
   }
 }
 

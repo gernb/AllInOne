@@ -7,8 +7,6 @@ public enum DOM {
   public static let window = JSObject.global.window
   public static let jsAlert = JSObject.global.alert.function!
   public static let createObjectURL = JSObject.global.URL.function!.createObjectURL!
-  public static let Date = JSObject.global.Date.function!
-  public static let tzOffset = -DOM.Date.new().jsValue.getTimezoneOffset().number!
 
   public static var locationPath: String {
     window.location.pathname.string ?? "/"
@@ -104,45 +102,14 @@ public extension View {
   func onRemoved() {}
 }
 
-public protocol ConvertibleToJSObject {
-  func jsObject() -> JSObject
-}
-extension Dictionary: ConvertibleToJSObject where Key == String {
-  public func jsObject() -> JSObject {
-    let result = JSObject()
-    for (key, value) in self {
-      switch value {
-      case let value as String:
-        result[key] = JSValue(stringLiteral: value)
-      case let value as Int32:
-        result[key] = JSValue(integerLiteral: value)
-      case let value as Double:
-        result[key] = JSValue(floatLiteral: value)
-      case let value as Bool:
-        result[key] = .boolean(value)
-      case let value as JSObject:
-        result[key] = .object(value)
-      case let value as ConvertibleToJSObject:
-        result[key] = value.jsObject().jsValue
-      case let value as JSValue:
-        result[key] = value
-      default:
-        print(key, value)
-        fatalError()
-      }
-    }
-    return result
-  }
-}
-
 public extension JSValue {
   func onClick(_ handler: @escaping () -> Void) {
-      self.onclick = .object(
-        JSClosure { _ in
-          handler()
-          return .undefined
-        }
-      )
+    self.onclick = .object(
+      JSClosure { _ in
+        handler()
+        return .undefined
+      }
+    )
   }
 
   func event(_ event: String, _ handler: @escaping () -> Void) {
@@ -155,6 +122,3 @@ public extension JSValue {
     )
   }
 }
-
-extension JSValue: @retroactive @unchecked Sendable {}
-extension JSPromise: @retroactive @unchecked Sendable {}

@@ -3,13 +3,13 @@ import JavaScriptEventLoop
 @preconcurrency import JavaScriptKit
 import Shared
 
-struct ClientAPI: Sendable {
+public struct ClientAPI: Sendable {
   enum Error: Swift.Error {
     case fetchError(Int)
     case unknown
   }
 
-  var folderListing: @Sendable (_ path: String) async throws -> FolderListingResponse
+  public var folderListing: @Sendable (_ path: String) async throws -> FolderListingResponse
   var fetch: @Sendable (_ path: String, _ etag: String?) async throws -> (response: JSValue, etag: String)?
   var fetchFile: @Sendable (_ path: String, _ etag: String?) async throws -> (data: Data, etag: String)?
   var fetchJson: @Sendable (_ path: String, _ etag: String?) async throws -> (json: JSValue, etag: String)?
@@ -19,7 +19,7 @@ struct ClientAPI: Sendable {
   var delete: @Sendable (_ path: String) async throws -> Void
 }
 
-extension ClientAPI {
+public extension ClientAPI {
   func fetch(path: String, ifNotMatching etag: String? = nil) async throws -> (response: JSValue, etag: String)? {
     try await fetch(path, etag)
   }
@@ -50,7 +50,7 @@ extension ClientAPI {
   }
 }
 
-extension ClientAPI {
+public extension ClientAPI {
   static let live = Self(
     folderListing: { path in
       guard let (json, _) = try await fetchJson(url: baseUrl + path, etag: nil) else {
