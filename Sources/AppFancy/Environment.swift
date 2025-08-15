@@ -41,9 +41,9 @@ private struct EnvironmentWrapper<T: Element, K: EnvironmentKey>: Element {
     self.value = value
   }
 
-  func render() -> JSObject {
+  func render(parentNode: JSValue) -> JSObject {
     var localStorage = Environment.storage
     localStorage[key.key] = value
-    return Environment.$storage.withValue(localStorage) { wrapped.render() }
+    return Environment.$storage.withValue(localStorage) { wrapped.render(parentNode: parentNode) }
   }
 }

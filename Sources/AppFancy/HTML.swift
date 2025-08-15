@@ -3,10 +3,10 @@
 @MainActor
 protocol Element {
   var body: Element { get }
-  func render() -> JSObject
+  func render(parentNode: JSValue) -> JSObject
 }
 extension Element {
-  func render() -> JSObject { body.render() }
+  func render(parentNode: JSValue) -> JSObject { body.render(parentNode: parentNode) }
 }
 
 @resultBuilder
@@ -61,15 +61,17 @@ struct HTML: Element {
   private static let doc = JSObject.global.document
   private static let empty: @Sendable () -> [Element] = {[]}
 
+  typealias Builder = (_ parentNode: JSValue, _ node: JSValue) -> Void
+
   let tag: HTMLTag
   let classList: [HTMLClass]
-  let builder: (JSValue) -> Void
+  let builder: Builder
   let contents: () -> [Element]
 
   init(
     _ tag: HTMLTag,
     classList: [HTMLClass],
-    builder: @escaping (JSValue) -> Void,
+    builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
     self.tag = tag
@@ -79,17 +81,17 @@ struct HTML: Element {
   }
 
   init(_ tag: HTMLTag) {
-    self.init(tag, classList: [], builder: { _ in }, containing: Self.empty)
+    self.init(tag, classList: [], builder: { _, _ in }, containing: Self.empty)
   }
 
-  init(_ tag: HTMLTag, builder: @escaping (JSValue) -> Void) {
+  init(_ tag: HTMLTag, builder: @escaping Builder) {
     self.init(tag, classList: [], builder: builder, containing: Self.empty)
   }
 
   init(
     _ tag: HTMLTag,
     classList: [HTMLClass],
-    builder: @escaping (JSValue) -> Void
+    builder: @escaping Builder
   ) {
     self.init(tag, classList: classList, builder: builder, containing: Self.empty)
   }
@@ -98,13 +100,13 @@ struct HTML: Element {
     _ tag: HTMLTag,
     classes: HTMLClass...
   ) {
-    self.init(tag, classList: Array(classes), builder: { _ in }, containing: Self.empty)
+    self.init(tag, classList: Array(classes), builder: { _, _ in }, containing: Self.empty)
   }
 
   init(
     _ tag: HTMLTag,
     classes: HTMLClass...,
-    builder: @escaping (JSValue) -> Void,
+    builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
     self.init(tag, classList: Array(classes), builder: builder, containing: contents)
@@ -115,13 +117,13 @@ struct HTML: Element {
     classes: HTMLClass...,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: Array(classes), builder: { _ in }, containing: contents)
+    self.init(tag, classList: Array(classes), builder: { _, _ in }, containing: contents)
   }
 
   init(
     _ tag: HTMLTag,
     class: HTMLClass,
-    builder: @escaping (JSValue) -> Void,
+    builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
     self.init(tag, classList: [`class`], builder: builder, containing: contents)
@@ -130,7 +132,7 @@ struct HTML: Element {
   init(
     _ tag: HTMLTag,
     class: HTMLClass,
-    builder: @escaping (JSValue) -> Void
+    builder: @escaping Builder
   ) {
     self.init(tag, classList: [`class`], builder: builder, containing: Self.empty)
   }
@@ -140,21 +142,21 @@ struct HTML: Element {
     class: HTMLClass,
     @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
   ) {
-    self.init(tag, classList: [`class`], builder: { _ in }, containing: contents)
+    self.init(tag, classList: [`class`], builder: { _, _ in }, containing: contents)
   }
 
   var body: Element {
     fatalError("Only render() should be called on `HTML`")
   }
 
-  func render() -> JSObject {
+  func render(parentNode: JSValue) -> JSObject {
     let node = Self.doc.createElement(tag.rawValue)
     for c in classList {
       _ = node.classList.add(c.rawValue)
     }
-    builder(node)
+    builder(parentNode, node)
     for child in contents() {
-      _ = node.appendChild(child.render())
+      _ = node.appendChild(child.render(parentNode: node))
     }
     return node.object!
   }

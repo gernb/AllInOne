@@ -33,6 +33,13 @@ public final class MainViewModel {
     }
   }
 
+  public func fetchCurrentDirectory() async throws {
+    let response = try await clientApi.folderListing(pathString)
+    folders = response.directories
+    files = response.files
+    lastFetchTimestamp = .now.addingTimeInterval(DOM.tzOffset * 60)
+  }
+
   public func delete(_ item: String) {
     Task {
       do {
@@ -105,13 +112,6 @@ public final class MainViewModel {
 
   private func fullPath(for item: String) -> String {
     pathString + "/" + item
-  }
-
-  private func fetchCurrentDirectory() async throws {
-    let response = try await clientApi.folderListing(pathString)
-    folders = response.directories
-    files = response.files
-    lastFetchTimestamp = .now.addingTimeInterval(DOM.tzOffset * 60)
   }
 
   struct UnexpectedError: Swift.Error {}

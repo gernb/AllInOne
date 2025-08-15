@@ -6,10 +6,10 @@ extension Element {
     guard maxWidth != nil || maxHeight != nil else { return self }
     return HTML(.div) {
       if let maxWidth {
-        $0.style.maxWidth = .string("\(maxWidth)px")
+        $1.style.maxWidth = .string("\(maxWidth)px")
       }
       if let maxHeight {
-        $0.style.maxHeight = .string("\(maxHeight)px")
+        $1.style.maxHeight = .string("\(maxHeight)px")
       }
     } containing: {
       self
@@ -22,6 +22,7 @@ extension HTMLClass {
   static let back: Self = "back"
   static let icon: Self = "icon"
   static let iconBack: Self = "icon-back"
+  static let preloader: Self = "preloader"
 }
 
 // MARK: NavBar
@@ -32,12 +33,12 @@ struct NavBar: Element {
 
   private static let backButtonId = "backButtonId"
   private static let backButton = HTML(.a, classes: .link, .back) {
-    $0.href = "#"
-    $0.id = .string(backButtonId)
+    $1.href = "#"
+    $1.id = .string(backButtonId)
   } containing: {
     HTML(.i, classes: .icon, .iconBack)
     HTML(.span) {
-      $0.innerText = "Back"
+      $1.innerText = "Back"
     }
   }
 
@@ -55,7 +56,7 @@ struct NavBar: Element {
     self.showBackground = showBackground
     self.content = {[
       HTML(.div, class: .title) {
-        $0.innerText = .string(title)
+        $1.innerText = .string(title)
       }
     ]}
   }
@@ -120,8 +121,8 @@ struct Button: Element {
       Environment[Button.Raised.self] ? .buttonRaised : nil,
     ].compactMap { $0 }
     return HTML(.button, classList: classList) {
-      $0.innerText = .string(label)
-      $0.onClick(action)
+      $1.innerText = .string(label)
+      $1.onClick(action)
     }
   }
 }
@@ -216,7 +217,9 @@ protocol Page: Element {
   @ElementBuilder var content: [Element] { get }
   func observing()
   func observables() -> Set<ObserveToken>
+  func willBeAdded()
   func onAdded()
+  func willBeRemoved()
   func onRemoved()
 }
 extension Page {
@@ -225,7 +228,7 @@ extension Page {
     HTML(
       .div,
       class: .page,
-      builder: { $0.dataset.name = .string(name) },
+      builder: { $1.dataset.name = .string(name) },
       containing: {
         controls + [
           HTML(.div, class: .pageContent, containing: { content })
@@ -235,7 +238,9 @@ extension Page {
   }
   func observing() {}
   func observables() -> Set<ObserveToken> { [] }
+  func willBeAdded() {}
   func onAdded() {}
+  func willBeRemoved() {}
   func onRemoved() {}
 }
 
@@ -253,4 +258,37 @@ enum Transition: String {
   case flip = "f7-flip"
   case parallax = "f7-parallax"
   case push = "f7-push"
+}
+
+// MARK: Pull-to-refresh
+
+struct PullToRefresh: Element {
+  let action: () async -> Void
+
+  var body: Element {
+    HTML(.div, class: .ptrPreloader) { parentNode, _ in
+      assert(parentNode.className.string == HTMLClass.pageContent.rawValue)
+      _ = parentNode.classList.add(HTMLClass.pagePullToRefresh.rawValue)
+      _ = App.dom7(parentNode).on(
+        "ptr:refresh",
+        JSClosure { args in
+          let done = args[1].function!
+          Task {
+            await action()
+            done()
+          }
+          return .undefined
+        }
+      )
+    } containing: {
+      HTML(.div, class: .preloader)
+      HTML(.div, class: .ptrArrow)
+    }
+  }
+}
+
+extension HTMLClass {
+  static let ptrPreloader: Self = "ptr-preloader"
+  static let ptrArrow: Self = "ptr-arrow"
+  static let pagePullToRefresh: Self = "ptr-content"
 }

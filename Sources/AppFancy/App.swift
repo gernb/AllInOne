@@ -25,7 +25,8 @@ struct App {
     f7app = JSObject.global.app
 
     let loadingPage = doc.getElementById("loadingPage")
-    _ = f7app.views.main.el.insertBefore(NavBar(title: "Fancy App").render(), loadingPage)
+    let parentNode = f7app.views.main.el as JSValue
+    _ = f7app.views.main.el.insertBefore(NavBar(title: "Fancy App").render(parentNode: parentNode), loadingPage)
 
     _ = dom7(doc).on(
       "page:beforein",
@@ -42,7 +43,27 @@ struct App {
         tokens = [observe { page.observing() }]
         tokens.formUnion(page.observables())
         pages[name] = (page, tokens)
-        page.onAdded()
+        page.willBeAdded()
+        return .undefined
+      }
+    )
+    _ = dom7(doc).on(
+      "page:afterin",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        print("page:afterin", name)
+        pages[name]?.page.onAdded()
+        return .undefined
+      }
+    )
+    _ = dom7(doc).on(
+      "page:beforeout",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        print("page:beforeout", name)
+        pages[name]?.page.willBeRemoved()
         return .undefined
       }
     )
@@ -83,12 +104,24 @@ struct App {
       options = [:].jsObject()
     }
     pages[page.name] = (page, [])
+    let parentNode = f7app.views.main.el as JSValue
     _ = f7app.views.main.router.navigate(
       [
         "url": "/swift/\(page.name)",
-        "route": ["el": page.render()],
+        "route": ["el": page.render(parentNode: parentNode)],
       ].jsObject(),
       options
     )
+  }
+
+  @discardableResult
+  static func showToast(text: String, closeAfter: Duration? = nil) -> JSValue {
+    let params = JSObject()
+    params.text = .string(text)
+    if let closeAfter {
+      let closeTimeout = Double(closeAfter.components.seconds * 1000)
+      params.closeTimeout = .number(closeTimeout)
+    }
+    return f7app.toast.show(params)
   }
 }
