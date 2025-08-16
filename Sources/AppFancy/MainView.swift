@@ -23,19 +23,7 @@ struct MainView: Page {
         [("/", .house)] + model.pathList.map { ($0, .folder) }
       )
 
-      Block(style: .inset) {
-        Card {
-          HTML(.p) {
-            $1.innerText = "Main View"
-          }
-          Button(label: "Page 2") {
-            print("Click…")
-            App.navigate(to: SecondView())
-          }
-          .frame(maxWidth: 150)
-          .buttonStyle(fill: .solid, shape: .round)
-        }
-      }
+      HTML(.ul, id: list)
 
       BlockFooter {
         HTML(.span, id: timestampLabel)
@@ -43,6 +31,7 @@ struct MainView: Page {
     }
   }
 
+  private let list: IdentifiedNode = "list"
   private let timestampLabel: IdentifiedNode = "timestampLabel"
 
   func observing() {
@@ -52,6 +41,45 @@ struct MainView: Page {
     } else {
       timestampLabel.innerText = ""
     }
+
+    _ = list.replaceChildren()
+    for folder in model.folders {
+      let item = HTML(.li) {
+        Icon(.folderFill)
+        HTML(.span) {
+          $1.innerText = .string(folder)
+        }
+      }
+      _ = list.appendChild(item.render(parentNode: list.node))
+      // let item = ListItem(folder, isFolder: true) {
+      //   model.path.append(folder)
+      // } trashTapped: {
+      //   let confirmed = DOM.window.confirm("Do you want to delete '\(folder)'?").boolean!
+      //   if confirmed {
+      //     model.delete(folder)
+      //   }
+      // }
+      // DOM.addView(item, to: list)
+    }
+    for file in model.files {
+      let item = HTML(.li) {
+        Icon(.docTextFill)
+        HTML(.span) {
+          $1.innerText = .string(file)
+        }
+      }
+      _ = list.appendChild(item.render(parentNode: list.node))
+    //   let item = ListItem(file) {
+    //     model.download(file: file)
+    //   } trashTapped: {
+    //     let confirmed = DOM.window.confirm("Do you want to delete '\(file)'?").boolean!
+    //     if confirmed {
+    //       model.delete(file)
+    //     }
+    //   }
+    //   DOM.addView(item, to: list)
+    }
+    // _ = list.object.replaceChildren(listItems)
   }
 
   func willBeAdded() {
@@ -89,24 +117,5 @@ final class MainViewModel {
     folders = response.directories
     files = response.files
     lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
-  }
-}
-
-struct SecondView: Page {
-  let name = "second-view"
-
-  var content: [Element] {
-    HTML(.p) {
-      $1.innerText = "page 2"
-    }
-  }
-
-  func onAdded() {
-    print("SecondView added")
-    NavBar.showBackButton(true)
-  }
-
-  func onRemoved() {
-    print("SecondView removed")
   }
 }

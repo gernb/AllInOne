@@ -13,6 +13,10 @@ struct IdentifiedNode: ExpressibleByStringLiteral, HTMLId {
     self.init(value)
   }
 
+  subscript(dynamicMember name: String) -> ((ConvertibleToJSValue...) -> JSValue) {
+      node[dynamicMember: name]
+  }
+
   subscript(dynamicMember name: String) -> JSValue {
     get { node[dynamicMember: name] }
     nonmutating set { node[dynamicMember: name] = newValue }

@@ -446,6 +446,10 @@ extension HTMLClass {
 }
 
 enum F7Icon: String {
+  case docPlaintext = "doc_plaintext"
+  case docText = "doc_text"
+  case docTextFill = "doc_text_fill"
   case folder
+  case folderFill = "folder_fill"
   case house
 }
