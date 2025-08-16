@@ -15,16 +15,22 @@ struct MainView: Page {
     PullToRefresh {
       try? await model.fetchCurrentDirectory()
     }
-    Card {
-      HTML(.p) {
-        $1.innerText = "Main View"
+    Block(style: .inset) {
+      Block(style: .outline) {
+        let items: [String] = ["one", "two", "three"]
+        Breadcrumbs(items)
       }
-      Button(label: "Page 2") {
-        print("Click…")
-        App.navigate(to: SecondView())
+      Card {
+        HTML(.p) {
+          $1.innerText = "Main View"
+        }
+        Button(label: "Page 2") {
+          print("Click…")
+          App.navigate(to: SecondView())
+        }
+        .frame(maxWidth: 150)
+        .buttonStyle(fill: .solid, shape: .round)
       }
-      .frame(maxWidth: 150)
-      .buttonStyle(fill: .solid, shape: .round)
     }
   }
 
@@ -32,6 +38,8 @@ struct MainView: Page {
     if let timestamp = model.lastFetchTimestamp {
       let value = timestamp.formatted(date: .abbreviated, time: .standard)
       model.showToast(text: "Last updated: \(value)")
+    } else {
+      model.hideToast()
     }
   }
 
@@ -74,8 +82,12 @@ final class MainViewModel {
   }
 
   func showToast(text: String) {
-    _ = toast?.close()
-    toast = App.showToast(text: text)
+    if toast == nil || toast?.params.text.string != text {
+      _ = toast?.close()
+      toast = App.showToast(text: text)
+    } else {
+      print("toast text is unchanged")
+    }
   }
 
   func hideToast() {

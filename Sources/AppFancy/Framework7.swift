@@ -25,6 +25,53 @@ extension HTMLClass {
   static let preloader: Self = "preloader"
 }
 
+// MARK: Block
+
+struct Block: Element {
+  let styles: [Style]
+  let content: () -> [Element]
+
+  init(styles: [Style], @ElementBuilder content: @escaping () -> [Element]) {
+    self.styles = styles
+    self.content = content
+  }
+
+  init(style: Style..., @ElementBuilder content: @escaping () -> [Element]) {
+    self.init(styles: style, content: content)
+  }
+
+  init(@ElementBuilder content: @escaping () -> [Element]) {
+    self.init(styles: [], content: content)
+  }
+
+  var body: Element {
+    HTML(
+      .div,
+      classList: [.block] + styles.map(\.class),
+      containing: content
+    )
+  }
+}
+extension Block {
+  enum Style {
+    case strong, outline, inset
+    var `class`: HTMLClass {
+      switch self {
+      case .strong: .blockStrong
+      case .outline: .blockOutline
+      case .inset: .inset
+      }
+    }
+  }
+}
+
+extension HTMLClass {
+  static let block: Self = "block"
+  static let blockStrong: Self = "block-strong"
+  static let blockOutline: Self = "block-outline"
+  static let inset: Self = "inset"
+}
+
 // MARK: NavBar
 
 struct NavBar: Element {
@@ -297,5 +344,43 @@ struct PullToRefresh: Element {
 extension HTMLClass {
   static let ptrPreloader: Self = "ptr-preloader"
   static let ptrArrow: Self = "ptr-arrow"
+  static let ptrWatchScrollable: Self = "ptr-watch-scrollable"
   static let pagePullToRefresh: Self = "ptr-content"
+}
+
+// MARK: Breadcrumbs
+
+struct Breadcrumbs: Element {
+  let items: [Element]
+
+  init(_ items: [Element]) {
+    self.items = items
+  }
+
+  init(_ items: [String]) {
+    self.items = items.map { text in
+      HTML(.div) { $1.innerText = .string(text) }
+    }
+  }
+
+  var body: Element {
+    HTML(.div, class: .breadcrumbs) {
+      if let first = items.first {
+        let classes: [HTMLClass] = items.count == 1 ? [.breadcrumbsItem, .breadcrumbsItemActive] : [.breadcrumbsItem]
+        first.addingClasses(classes)
+        for (index, item) in items.enumerated().dropFirst() {
+          HTML(.div, class: .breadcrumbsSeparator)
+          let classes: [HTMLClass] = index == (items.count - 1) ? [.breadcrumbsItem, .breadcrumbsItemActive] : [.breadcrumbsItem]
+          item.addingClasses(classes)
+        }
+      }
+    }
+  }
+}
+
+extension HTMLClass {
+  static let breadcrumbs: Self = "breadcrumbs"
+  static let breadcrumbsItem: Self = "breadcrumbs-item"
+  static let breadcrumbsItemActive: Self = "breadcrumbs-item-active"
+  static let breadcrumbsSeparator: Self = "breadcrumbs-separator"
 }

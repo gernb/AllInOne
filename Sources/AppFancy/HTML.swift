@@ -26,6 +26,9 @@ struct ElementBuilder {
   static func buildExpression(_ expression: [Element]) -> [Element] {
     expression
   }
+  static func buildArray(_ components: [[Element]]) -> [Element] {
+    components.flatMap { $0 }
+  }
 }
 
 struct HTMLTag: ExpressibleByStringLiteral, RawRepresentable {
@@ -45,6 +48,8 @@ extension HTMLTag {
   static let a: Self = "a"
   static let i: Self = "i"
   static let button: Self = "button"
+  static let ul: Self = "ul"
+  static let li: Self = "li"
 }
 
 struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
@@ -59,7 +64,8 @@ struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
 
 struct HTML: Element {
   private static let doc = JSObject.global.document
-  private static let empty: @Sendable () -> [Element] = {[]}
+  private static let emptyBuilder: Builder = { _, _ in }
+  private static let emptyContents: @Sendable () -> [Element] = {[]}
 
   typealias Builder = (_ parentNode: JSValue, _ node: JSValue) -> Void
 
@@ -81,11 +87,19 @@ struct HTML: Element {
   }
 
   init(_ tag: HTMLTag) {
-    self.init(tag, classList: [], builder: { _, _ in }, containing: Self.empty)
+    self.init(tag, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
   init(_ tag: HTMLTag, builder: @escaping Builder) {
-    self.init(tag, classList: [], builder: builder, containing: Self.empty)
+    self.init(tag, classList: [], builder: builder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    classList: [HTMLClass],
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, classList: classList, builder: Self.emptyBuilder, containing: contents)
   }
 
   init(
@@ -93,14 +107,14 @@ struct HTML: Element {
     classList: [HTMLClass],
     builder: @escaping Builder
   ) {
-    self.init(tag, classList: classList, builder: builder, containing: Self.empty)
+    self.init(tag, classList: classList, builder: builder, containing: Self.emptyContents)
   }
 
   init(
     _ tag: HTMLTag,
     classes: HTMLClass...
   ) {
-    self.init(tag, classList: Array(classes), builder: { _, _ in }, containing: Self.empty)
+    self.init(tag, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
   init(
@@ -117,7 +131,7 @@ struct HTML: Element {
     classes: HTMLClass...,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: Array(classes), builder: { _, _ in }, containing: contents)
+    self.init(tag, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
   }
 
   init(
@@ -134,7 +148,7 @@ struct HTML: Element {
     class: HTMLClass,
     builder: @escaping Builder
   ) {
-    self.init(tag, classList: [`class`], builder: builder, containing: Self.empty)
+    self.init(tag, classList: [`class`], builder: builder, containing: Self.emptyContents)
   }
 
   init(
@@ -142,7 +156,7 @@ struct HTML: Element {
     class: HTMLClass,
     @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
   ) {
-    self.init(tag, classList: [`class`], builder: { _, _ in }, containing: contents)
+    self.init(tag, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
   }
 
   var body: Element {
@@ -159,6 +173,39 @@ struct HTML: Element {
       _ = node.appendChild(child.render(parentNode: node))
     }
     return node.object!
+  }
+}
+
+extension Element {
+  func addingClasses(_ classes: HTMLClass...) -> Element {
+    addingClasses(Array(classes))
+  }
+  func addingClasses(_ classes: [HTMLClass]) -> Element {
+    ElementModifier(self) {
+      for c in classes {
+        _ = $0.classList.add(c.rawValue)
+      }
+    }
+  }
+}
+
+private struct ElementModifier<T: Element>: Element {
+  private let wrapped: T
+  private let modify: (_ node: JSObject) -> Void
+
+  var body: Element {
+    self
+  }
+
+  init(_ wrapped: T, with modify: @escaping (JSObject) -> Void) {
+    self.wrapped = wrapped
+    self.modify = modify
+  }
+
+  func render(parentNode: JSValue) -> JSObject {
+    let node = wrapped.render(parentNode: parentNode)
+    modify(node)
+    return node
   }
 }
 
