@@ -20,7 +20,6 @@ extension Element {
 extension HTMLClass {
   static let link: Self = "link"
   static let back: Self = "back"
-  static let icon: Self = "icon"
   static let iconBack: Self = "icon-back"
   static let preloader: Self = "preloader"
 }
@@ -65,11 +64,19 @@ extension Block {
   }
 }
 
+struct BlockFooter: Element {
+  @ElementBuilder var content: () -> [Element]
+  var body: Element {
+    HTML(.div, class: .blockFooter, containing: content)
+  }
+}
+
 extension HTMLClass {
   static let block: Self = "block"
   static let blockStrong: Self = "block-strong"
   static let blockOutline: Self = "block-outline"
   static let inset: Self = "inset"
+  static let blockFooter: Self = "block-footer"
 }
 
 // MARK: NavBar
@@ -356,11 +363,29 @@ struct Breadcrumbs: Element {
   init(_ items: [Element]) {
     self.items = items
   }
-
   init(_ items: [String]) {
-    self.items = items.map { text in
-      HTML(.div) { $1.innerText = .string(text) }
-    }
+    self.init(
+      items.map { text in
+        HTML(.div) { $1.innerText = .string(text) }
+      }
+    )
+  }
+  init(_ items: [(label: String, icon: F7Icon?)]) {
+    self.init(
+      items.map { (text, icon) in
+        HTML(.div) {
+          if let icon {
+            Icon(icon)
+            HTML(.span) {
+              $1.style.marginLeft = "5px"
+              $1.innerText = .string(text)
+            }
+          } else {
+            HTML(.span) { $1.innerText = .string(text) }
+          }
+        }
+      }
+    )
   }
 
   var body: Element {
@@ -383,4 +408,44 @@ extension HTMLClass {
   static let breadcrumbsItem: Self = "breadcrumbs-item"
   static let breadcrumbsItemActive: Self = "breadcrumbs-item-active"
   static let breadcrumbsSeparator: Self = "breadcrumbs-separator"
+}
+
+// MARK: Icons
+
+struct Icon: Element {
+  let icon: String
+
+  init(_ icon: String) {
+    self.icon = icon
+  }
+  init(_ icon: F7Icon) {
+    self.init(icon.rawValue)
+  }
+  init(_ icon: any RawRepresentable<String>) {
+    self.init(icon.rawValue)
+  }
+
+  var body: Element {
+    HTML(.span) {
+      HTML(.i, classes: .icon, .f7Icons, .ifNotMD) {
+        $1.innerText = .string(icon)
+      }
+      HTML(.i, classes: .icon, .materialIcons, .mdOnly) {
+        $1.innerText = .string(icon)
+      }
+    }
+  }
+}
+
+extension HTMLClass {
+  static let icon: Self = "icon"
+  static let f7Icons: Self = "f7-icons"
+  static let materialIcons: Self = "material-icons"
+  static let ifNotMD: Self = "if-not-md"
+  static let mdOnly: Self = "md-only"
+}
+
+enum F7Icon: String {
+  case folder
+  case house
 }

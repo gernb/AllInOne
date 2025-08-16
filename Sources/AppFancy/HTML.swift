@@ -29,6 +29,12 @@ struct ElementBuilder {
   static func buildArray(_ components: [[Element]]) -> [Element] {
     components.flatMap { $0 }
   }
+  static func buildEither(first components: [Element]) -> [Element] {
+    components
+  }
+  static func buildEither(second components: [Element]) -> [Element] {
+    components
+  }
 }
 
 struct HTMLTag: ExpressibleByStringLiteral, RawRepresentable {
@@ -52,6 +58,13 @@ extension HTMLTag {
   static let li: Self = "li"
 }
 
+protocol HTMLId {
+  var id: String { get }
+}
+extension String: HTMLId {
+  var id: String { self }
+}
+
 struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
   let rawValue: String
   init(stringLiteral value: StringLiteralType) {
@@ -70,28 +83,39 @@ struct HTML: Element {
   typealias Builder = (_ parentNode: JSValue, _ node: JSValue) -> Void
 
   let tag: HTMLTag
+  let id: HTMLId?
   let classList: [HTMLClass]
   let builder: Builder
   let contents: () -> [Element]
 
   init(
     _ tag: HTMLTag,
+    id: HTMLId?,
     classList: [HTMLClass],
     builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
     self.tag = tag
+    self.id = id
     self.classList = classList
     self.builder = builder
     self.contents = contents
   }
 
   init(_ tag: HTMLTag) {
-    self.init(tag, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
+    self.init(tag, id: nil, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
+  }
+
+  init(_ tag: HTMLTag, id: HTMLId) {
+    self.init(tag, id: id, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
   init(_ tag: HTMLTag, builder: @escaping Builder) {
-    self.init(tag, classList: [], builder: builder, containing: Self.emptyContents)
+    self.init(tag, id: nil, classList: [], builder: builder, containing: Self.emptyContents)
+  }
+
+  init(_ tag: HTMLTag, id: HTMLId, builder: @escaping Builder) {
+    self.init(tag, id: id, classList: [], builder: builder, containing: Self.emptyContents)
   }
 
   init(
@@ -99,7 +123,16 @@ struct HTML: Element {
     classList: [HTMLClass],
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: classList, builder: Self.emptyBuilder, containing: contents)
+    self.init(tag, id: nil, classList: classList, builder: Self.emptyBuilder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classList: [HTMLClass],
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, id: id, classList: classList, builder: Self.emptyBuilder, containing: contents)
   }
 
   init(
@@ -107,14 +140,31 @@ struct HTML: Element {
     classList: [HTMLClass],
     builder: @escaping Builder
   ) {
-    self.init(tag, classList: classList, builder: builder, containing: Self.emptyContents)
+    self.init(tag, id: nil, classList: classList, builder: builder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classList: [HTMLClass],
+    builder: @escaping Builder
+  ) {
+    self.init(tag, id: id, classList: classList, builder: builder, containing: Self.emptyContents)
   }
 
   init(
     _ tag: HTMLTag,
     classes: HTMLClass...
   ) {
-    self.init(tag, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
+    self.init(tag, id: nil, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classes: HTMLClass...
+  ) {
+    self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
   init(
@@ -123,7 +173,17 @@ struct HTML: Element {
     builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: Array(classes), builder: builder, containing: contents)
+    self.init(tag, id: nil, classList: Array(classes), builder: builder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classes: HTMLClass...,
+    builder: @escaping Builder,
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, id: id, classList: Array(classes), builder: builder, containing: contents)
   }
 
   init(
@@ -131,7 +191,33 @@ struct HTML: Element {
     classes: HTMLClass...,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
+    self.init(tag, id: nil, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classes: HTMLClass...,
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    classes: HTMLClass...,
+    builder: @escaping Builder
+  ) {
+    self.init(tag, id: nil, classList: Array(classes), builder: builder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    classes: HTMLClass...,
+    builder: @escaping Builder
+  ) {
+    self.init(tag, id: id, classList: Array(classes), builder: builder, containing: Self.emptyContents)
   }
 
   init(
@@ -140,7 +226,17 @@ struct HTML: Element {
     builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
-    self.init(tag, classList: [`class`], builder: builder, containing: contents)
+    self.init(tag, id: nil, classList: [`class`], builder: builder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    class: HTMLClass,
+    builder: @escaping Builder,
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, id: id, classList: [`class`], builder: builder, containing: contents)
   }
 
   init(
@@ -148,7 +244,16 @@ struct HTML: Element {
     class: HTMLClass,
     builder: @escaping Builder
   ) {
-    self.init(tag, classList: [`class`], builder: builder, containing: Self.emptyContents)
+    self.init(tag, id: nil, classList: [`class`], builder: builder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    class: HTMLClass,
+    builder: @escaping Builder
+  ) {
+    self.init(tag, id: id, classList: [`class`], builder: builder, containing: Self.emptyContents)
   }
 
   init(
@@ -156,7 +261,16 @@ struct HTML: Element {
     class: HTMLClass,
     @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
   ) {
-    self.init(tag, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
+    self.init(tag, id: nil, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId,
+    class: HTMLClass,
+    @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
+  ) {
+    self.init(tag, id: id, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
   }
 
   var body: Element {
@@ -165,6 +279,9 @@ struct HTML: Element {
 
   func render(parentNode: JSValue) -> JSObject {
     let node = Self.doc.createElement(tag.rawValue)
+    if let id = id?.id {
+      node.id = .string(id)
+    }
     for c in classList {
       _ = node.classList.add(c.rawValue)
     }

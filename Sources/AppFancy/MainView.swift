@@ -15,31 +15,42 @@ struct MainView: Page {
     PullToRefresh {
       try? await model.fetchCurrentDirectory()
     }
-    Block(style: .inset) {
-      Block(style: .outline) {
-        let items: [String] = ["one", "two", "three"]
-        Breadcrumbs(items)
+
+    HTML(.div) {
+      $1.style.margin = "10px"
+    } containing: {
+      Breadcrumbs(
+        [("/", .house)] + model.pathList.map { ($0, .folder) }
+      )
+
+      Block(style: .inset) {
+        Card {
+          HTML(.p) {
+            $1.innerText = "Main View"
+          }
+          Button(label: "Page 2") {
+            print("Click…")
+            App.navigate(to: SecondView())
+          }
+          .frame(maxWidth: 150)
+          .buttonStyle(fill: .solid, shape: .round)
+        }
       }
-      Card {
-        HTML(.p) {
-          $1.innerText = "Main View"
-        }
-        Button(label: "Page 2") {
-          print("Click…")
-          App.navigate(to: SecondView())
-        }
-        .frame(maxWidth: 150)
-        .buttonStyle(fill: .solid, shape: .round)
+
+      BlockFooter {
+        HTML(.span, id: timestampLabel)
       }
     }
   }
 
+  private let timestampLabel: IdentifiedNode = "timestampLabel"
+
   func observing() {
     if let timestamp = model.lastFetchTimestamp {
       let value = timestamp.formatted(date: .abbreviated, time: .standard)
-      model.showToast(text: "Last updated: \(value)")
+      timestampLabel.innerText = .string("Last updated: \(value)")
     } else {
-      model.hideToast()
+      timestampLabel.innerText = ""
     }
   }
 
@@ -49,10 +60,6 @@ struct MainView: Page {
       try? await model.fetchCurrentDirectory()
     }
   }
-
-  func willBeRemoved() {
-    model.hideToast()
-  }
 }
 
 @Perceptible
@@ -61,6 +68,9 @@ final class MainViewModel {
   let path: String
   var isRoot: Bool {
     path == "/"
+  }
+  var pathList: [String] {
+    path.components(separatedBy: "/").filter { $0.isEmpty == false }
   }
   private(set) var lastFetchTimestamp: Date?
   private(set) var folders: [String] = []
@@ -79,20 +89,6 @@ final class MainViewModel {
     folders = response.directories
     files = response.files
     lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
-  }
-
-  func showToast(text: String) {
-    if toast == nil || toast?.params.text.string != text {
-      _ = toast?.close()
-      toast = App.showToast(text: text)
-    } else {
-      print("toast text is unchanged")
-    }
-  }
-
-  func hideToast() {
-    _ = toast?.close()
-    toast = nil
   }
 }
 
