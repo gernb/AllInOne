@@ -2,10 +2,12 @@
 
 @MainActor
 protocol Element {
+  var id: HTMLId? { get }
   var body: Element { get }
   func render(parentNode: JSValue) -> JSObject
 }
 extension Element {
+  var id: HTMLId? { nil }
   func render(parentNode: JSValue) -> JSObject { body.render(parentNode: parentNode) }
 }
 
@@ -106,7 +108,7 @@ struct HTML: Element {
     self.init(tag, id: nil, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
-  init(_ tag: HTMLTag, id: HTMLId) {
+  init(_ tag: HTMLTag, id: HTMLId?) {
     self.init(tag, id: id, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
@@ -114,7 +116,7 @@ struct HTML: Element {
     self.init(tag, id: nil, classList: [], builder: builder, containing: Self.emptyContents)
   }
 
-  init(_ tag: HTMLTag, id: HTMLId, builder: @escaping Builder) {
+  init(_ tag: HTMLTag, id: HTMLId?, builder: @escaping Builder) {
     self.init(tag, id: id, classList: [], builder: builder, containing: Self.emptyContents)
   }
 
@@ -128,7 +130,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classList: [HTMLClass],
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
@@ -145,11 +147,20 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classList: [HTMLClass],
     builder: @escaping Builder
   ) {
     self.init(tag, id: id, classList: classList, builder: builder, containing: Self.emptyContents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    classList: [HTMLClass],
+    builder: @escaping Builder,
+    @ElementBuilder containing contents: @escaping () -> [Element]
+  ) {
+    self.init(tag, id: nil, classList: classList, builder: builder, containing: contents)
   }
 
   init(
@@ -161,7 +172,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classes: HTMLClass...
   ) {
     self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
@@ -178,7 +189,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classes: HTMLClass...,
     builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
@@ -196,7 +207,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classes: HTMLClass...,
     @ElementBuilder containing contents: @escaping () -> [Element]
   ) {
@@ -213,7 +224,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     classes: HTMLClass...,
     builder: @escaping Builder
   ) {
@@ -231,7 +242,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     class: HTMLClass,
     builder: @escaping Builder,
     @ElementBuilder containing contents: @escaping () -> [Element]
@@ -249,7 +260,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     class: HTMLClass,
     builder: @escaping Builder
   ) {
@@ -266,7 +277,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId,
+    id: HTMLId?,
     class: HTMLClass,
     @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
   ) {

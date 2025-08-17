@@ -453,3 +453,147 @@ enum F7Icon: String {
   case folderFill = "folder_fill"
   case house
 }
+
+// MARK: List / Swipeout
+
+struct List: Element {
+  let id: HTMLId?
+  let content: () -> [Element]
+
+  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [Element] = {[]}) {
+    self.id = id
+    self.content = content
+  }
+
+  var body: Element {
+    HTML(.div, class: .list) {
+      HTML(.ul, id: id, containing: content)
+    }
+  }
+}
+
+extension List {
+  struct Item: Element {
+    let id: HTMLId?
+    let title: String
+    let subtitle: String?
+    let icon: Icon?
+    let leadingSwipeActions: [SwipeAction]
+    let trailingSwipeActions: [SwipeAction]
+    let action: (() -> Void)?
+
+    private var hasSwipeOut: Bool {
+      leadingSwipeActions.isEmpty == false || trailingSwipeActions.isEmpty == false
+    }
+
+    init(
+      id: HTMLId? = nil,
+      title: String,
+      subtitle: String? = nil,
+      icon: F7Icon? = nil,
+      leadingSwipeActions: [SwipeAction] = [],
+      trailingSwipeActions: [SwipeAction] = [],
+      action: (() -> Void)? = nil
+    ) {
+      self.id = id
+      self.title = title
+      self.subtitle = subtitle
+      self.icon = icon.map { Icon($0) }
+      self.leadingSwipeActions = leadingSwipeActions
+      self.trailingSwipeActions = trailingSwipeActions
+      self.action = action
+    }
+
+    var body: Element {
+      HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
+        if let action {
+          HTML(.a, classList: hasSwipeOut ? [.itemLink, .itemContent, .swipeoutContent] : [.itemLink, .itemContent]) {
+            $1.href = "#"
+            _ = $1.addEventListener(
+              "click",
+              JSClosure { _ in
+                action()
+                return .undefined
+              }
+            )
+          } containing: {
+            content
+          }
+        } else {
+          HTML(.div, classList: hasSwipeOut ? [.itemContent, .swipeoutContent] : [.itemContent]) {
+            content
+          }
+        }
+      }
+    }
+
+    @ElementBuilder
+    private var content: [Element] {
+      if let icon {
+        HTML(.div, class: .itemMedia) {
+          icon
+        }
+        HTML(.div, class: .itemInner) {
+          HTML(.div, class: .itemTitle) { $1.innerText = .string(title) }
+          if let subtitle {
+            HTML(.div, class: .itemAfter) { $1.innerText = .string(subtitle) }
+          }
+        }
+      }
+      if leadingSwipeActions.isEmpty == false {
+        HTML(.div, class: .swipeoutActionsLeft) {
+          for item in leadingSwipeActions {
+            HTML(.a, class: .swipeoutClose) {
+              $1.href = "#"
+              $1.innerText = .string(item.title)
+              _ = $1.addEventListener(
+                "click",
+                JSClosure { _ in
+                  item.action()
+                  return .undefined
+                }
+              )
+            }
+          }
+        }
+      }
+      if trailingSwipeActions.isEmpty == false {
+        HTML(.div, class: .swipeoutActionsRight) {
+          for item in trailingSwipeActions {
+            HTML(.a, class: .swipeoutClose) {
+              $1.href = "#"
+              $1.innerText = .string(item.title)
+              _ = $1.addEventListener(
+                "click",
+                JSClosure { _ in
+                  item.action()
+                  return .undefined
+                }
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+
+  struct SwipeAction {
+    let title: String
+    let action: () -> Void
+  }
+}
+
+extension HTMLClass {
+  static let list: Self = "list"
+  static let itemContent: Self = "item-content"
+  static let itemMedia: Self = "item-media"
+  static let itemInner: Self = "item-inner"
+  static let itemTitle: Self = "item-title"
+  static let itemAfter: Self = "item-after"
+  static let itemLink: Self = "item-link"
+  static let swipeout: Self = "swipeout"
+  static let swipeoutContent: Self = "swipeout-content"
+  static let swipeoutActionsLeft: Self = "swipeout-actions-left"
+  static let swipeoutActionsRight: Self = "swipeout-actions-right"
+  static let swipeoutClose: Self = "swipeout-close"
+}

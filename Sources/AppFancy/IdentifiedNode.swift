@@ -1,3 +1,4 @@
+import Foundation
 import JavaScriptKit
 
 @dynamicMemberLookup
@@ -6,6 +7,9 @@ struct IdentifiedNode: ExpressibleByStringLiteral, HTMLId {
   let id: String
   var node: JSValue { Self.doc.getElementById(id) }
 
+  init() {
+    self.id = UUID().uuidString
+  }
   init(_ id: String) {
     self.id = id
   }
@@ -20,5 +24,14 @@ struct IdentifiedNode: ExpressibleByStringLiteral, HTMLId {
   subscript(dynamicMember name: String) -> JSValue {
     get { node[dynamicMember: name] }
     nonmutating set { node[dynamicMember: name] = newValue }
+  }
+
+  @MainActor
+  func add(_ element: Element) {
+    _ = node.appendChild(element.render(parentNode: node))
+  }
+
+  func clear() {
+    _ = node.replaceChildren()
   }
 }

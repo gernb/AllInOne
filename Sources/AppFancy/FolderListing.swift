@@ -3,12 +3,13 @@ import Foundation
 import JavaScriptKit
 import SwiftNavigation
 
-struct MainView: Page {
-  let name = "main-view"
-  private let model: MainViewModel
+struct FolderListing: Page {
+  let name: String
+  private let model: FolderListingModel
 
   init(path: String = "/") {
-    self.model = MainViewModel(path: path)
+    self.name = "FolderListing:\(path)"
+    self.model = FolderListingModel(path: path)
   }
 
   var content: [Element] {
@@ -23,7 +24,7 @@ struct MainView: Page {
         [("/", .house)] + model.pathList.map { ($0, .folder) }
       )
 
-      HTML(.ul, id: list)
+      List(id: list)
 
       BlockFooter {
         HTML(.span, id: timestampLabel)
@@ -31,8 +32,8 @@ struct MainView: Page {
     }
   }
 
-  private let list: IdentifiedNode = "list"
-  private let timestampLabel: IdentifiedNode = "timestampLabel"
+  private let list = IdentifiedNode()
+  private let timestampLabel = IdentifiedNode()
 
   func observing() {
     if let timestamp = model.lastFetchTimestamp {
@@ -42,15 +43,21 @@ struct MainView: Page {
       timestampLabel.innerText = ""
     }
 
-    _ = list.replaceChildren()
+    list.clear()
     for folder in model.folders {
-      let item = HTML(.li) {
-        Icon(.folderFill)
-        HTML(.span) {
-          $1.innerText = .string(folder)
-        }
+      let item = List.Item(
+        title: folder,
+        icon: .folderFill,
+        trailingSwipeActions: [
+          .init(title: "Delete") {
+            print("Delete:", folder)
+          }
+        ]
+      ) {
+        let newPage = FolderListing(path: model.path(for: folder))
+        App.navigate(to: newPage)
       }
-      _ = list.appendChild(item.render(parentNode: list.node))
+      list.add(item)
       // let item = ListItem(folder, isFolder: true) {
       //   model.path.append(folder)
       // } trashTapped: {
@@ -62,13 +69,8 @@ struct MainView: Page {
       // DOM.addView(item, to: list)
     }
     for file in model.files {
-      let item = HTML(.li) {
-        Icon(.docTextFill)
-        HTML(.span) {
-          $1.innerText = .string(file)
-        }
-      }
-      _ = list.appendChild(item.render(parentNode: list.node))
+      let item = List.Item(title: file, icon: .docTextFill)
+      list.add(item)
     //   let item = ListItem(file) {
     //     model.download(file: file)
     //   } trashTapped: {
@@ -79,7 +81,6 @@ struct MainView: Page {
     //   }
     //   DOM.addView(item, to: list)
     }
-    // _ = list.object.replaceChildren(listItems)
   }
 
   func willBeAdded() {
@@ -92,7 +93,7 @@ struct MainView: Page {
 
 @Perceptible
 @MainActor
-final class MainViewModel {
+final class FolderListingModel {
   let path: String
   var isRoot: Bool {
     path == "/"
@@ -117,5 +118,13 @@ final class MainViewModel {
     folders = response.directories
     files = response.files
     lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
+  }
+
+  func path(for folder: String) -> String {
+    if path.hasSuffix("/") {
+      path + folder
+    } else {
+      path + "/" + folder
+    }
   }
 }

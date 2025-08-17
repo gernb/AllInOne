@@ -16,7 +16,7 @@ struct App {
     JavaScriptEventLoop.installGlobalExecutor()
     print("Running…")
     setup()
-    navigate(to: MainView(), transition: .flip)
+    navigate(to: FolderListing(), transition: .flip)
   }
 
   static func setup() {
@@ -33,7 +33,7 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        print("page:beforein", name)
+        // print("page:beforein", name)
         // _ = JSObject.global.console.log(f7page)
         guard let entry = pages[name] else {
           return .undefined
@@ -52,7 +52,7 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        print("page:afterin", name)
+        // print("page:afterin", name)
         pages[name]?.page.onAdded()
         return .undefined
       }
@@ -62,7 +62,7 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        print("page:beforeout", name)
+        // print("page:beforeout", name)
         pages[name]?.page.willBeRemoved()
         return .undefined
       }
@@ -72,7 +72,7 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        print("page:afterout", name)
+        // print("page:afterout", name)
         guard let entry = pages[name] else {
           return .undefined
         }
@@ -89,7 +89,7 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        print("page:beforeremove", name)
+        // print("page:beforeremove", name)
         pages[name] = nil
         return .undefined
       }
