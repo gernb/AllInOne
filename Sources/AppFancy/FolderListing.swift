@@ -45,41 +45,35 @@ struct FolderListing: Page {
 
     list.clear()
     for folder in model.folders {
-      let item = List.Item(
+      let item = NavigationListItem(
         title: folder,
         icon: .folderFill,
-        trailingSwipeActions: [
-          .init(title: "Delete") {
-            print("Delete:", folder)
-          }
-        ]
-      ) {
-        let newPage = FolderListing(path: model.path(for: folder))
-        App.navigate(to: newPage)
+        destination: FolderListing(path: model.path(for: folder))
+      )
+      .swipeActions {
+        Swipeout.Action(title: "Delete", color: .red) {
+          confirmDelete(item: folder)
+        }
       }
       list.add(item)
-      // let item = ListItem(folder, isFolder: true) {
-      //   model.path.append(folder)
-      // } trashTapped: {
-      //   let confirmed = DOM.window.confirm("Do you want to delete '\(folder)'?").boolean!
-      //   if confirmed {
-      //     model.delete(folder)
-      //   }
-      // }
-      // DOM.addView(item, to: list)
     }
     for file in model.files {
-      let item = List.Item(title: file, icon: .docTextFill)
+      let item = ActionListItem(title: file, icon: .docTextFill) {
+        Task {
+          do {
+            try await model.download(file: file)
+          } catch {
+            print(error.message)
+            App.showAlert(text: error.message, title: "Something went wrong")
+          }
+        }
+      }
+      .swipeActions {
+        Swipeout.Action(title: "Delete", color: .red) {
+          confirmDelete(item: file)
+        }
+      }
       list.add(item)
-    //   let item = ListItem(file) {
-    //     model.download(file: file)
-    //   } trashTapped: {
-    //     let confirmed = DOM.window.confirm("Do you want to delete '\(file)'?").boolean!
-    //     if confirmed {
-    //       model.delete(file)
-    //     }
-    //   }
-    //   DOM.addView(item, to: list)
     }
   }
 
@@ -87,6 +81,19 @@ struct FolderListing: Page {
     NavBar.showBackButton(model.isRoot == false)
     Task {
       try? await model.fetchCurrentDirectory()
+    }
+  }
+
+  private func confirmDelete(item: String) {
+    App.showConfirmDialog(text: "Do you want to delete '\(item)'?") {
+      Task {
+        do {
+          try await model.delete(item)
+        } catch {
+          print(error.message)
+          App.showAlert(text: error.message, title: "Something went wrong")
+        }
+      }
     }
   }
 }
@@ -120,11 +127,39 @@ final class FolderListingModel {
     lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
   }
 
-  func path(for folder: String) -> String {
+  func path(for item: String) -> String {
     if path.hasSuffix("/") {
-      path + folder
+      path + item
     } else {
-      path + "/" + folder
+      path + "/" + item
     }
+  }
+
+  func delete(_ item: String) async throws {
+    try await clientApi.delete(path: path(for: item))
+    try await fetchCurrentDirectory()
+  }
+
+  func createFolder(_ name: String) async throws {
+    try await clientApi.createFolder(at: path(for: name))
+    try await fetchCurrentDirectory()
+  }
+
+  func download(file: String) async throws {
+    guard let response = try await clientApi.fetch(path: path(for: file))?.response,
+      let obj = response.blob().object,
+      let blob = try await JSPromise(obj)?.value
+    else {
+      struct DownloadFailure: Swift.Error {}
+      throw DownloadFailure()
+    }
+    let href = Global.createObjectURL(blob)
+    let link = HTML(.a) {
+      $1.href = href
+      $1.download = .string(file)
+    }
+    .render(parentNode: .undefined)
+    .jsValue
+    _ = link.click()
   }
 }

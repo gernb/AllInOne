@@ -65,7 +65,7 @@ public final class MainViewModel {
         else {
           throw UnexpectedError()
         }
-        let href = DOM.createObjectURL(blob)
+        let href = Global.createObjectURL(blob)
         let link = DOM.create("a") {
           $0.href = href
           $0.download = .string(file)

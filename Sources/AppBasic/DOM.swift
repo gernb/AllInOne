@@ -6,7 +6,6 @@ public enum DOM {
   public static let doc = JSObject.global.document
   public static let window = JSObject.global.window
   public static let jsAlert = JSObject.global.alert.function!
-  public static let createObjectURL = JSObject.global.URL.function!.createObjectURL!
 
   public static var locationPath: String {
     window.location.pathname.string ?? "/"

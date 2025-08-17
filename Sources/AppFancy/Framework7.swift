@@ -454,13 +454,44 @@ enum F7Icon: String {
   case house
 }
 
-// MARK: List / Swipeout
+// MARK: Colours
+
+enum ThemeColor {
+  case primary, white, black
+  case red, green, blue
+  case lightBlue
+  case pink, yellow, teal, lime
+  case orange, deepOrange
+  case purple, deepPurple
+
+  var `class`: HTMLClass {
+    switch self {
+    case .primary: "color-primary"
+    case .white: "color-white"
+    case .black: "color-black"
+    case .red: "color-red"
+    case .green: "color-green"
+    case .blue: "color-blue"
+    case .lightBlue: "color-lightblue"
+    case .pink: "color-pink"
+    case .yellow: "color-yellow"
+    case .teal: "color-teal"
+    case .lime: "color-lime"
+    case .orange: "color-orange"
+    case .deepOrange: "color-deeporange"
+    case .purple: "color-purple"
+    case .deepPurple: "color-deeppurple"
+    }
+  }
+}
+
+// MARK: List
 
 struct List: Element {
   let id: HTMLId?
-  let content: () -> [Element]
+  let content: () -> [ListItemElement]
 
-  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [Element] = {[]}) {
+  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [ListItemElement] = {[]}) {
     self.id = id
     self.content = content
   }
@@ -472,114 +503,260 @@ struct List: Element {
   }
 }
 
-extension List {
-  struct Item: Element {
-    let id: HTMLId?
-    let title: String
-    let subtitle: String?
-    let icon: Icon?
-    let leadingSwipeActions: [SwipeAction]
-    let trailingSwipeActions: [SwipeAction]
-    let action: (() -> Void)?
+protocol ListItemElement: Element {}
 
-    private var hasSwipeOut: Bool {
-      leadingSwipeActions.isEmpty == false || trailingSwipeActions.isEmpty == false
-    }
+struct ListItem: ListItemElement {
+  let id: HTMLId?
+  let title: String
+  let subtitle: String?
+  let icon: Icon?
 
-    init(
-      id: HTMLId? = nil,
-      title: String,
-      subtitle: String? = nil,
-      icon: F7Icon? = nil,
-      leadingSwipeActions: [SwipeAction] = [],
-      trailingSwipeActions: [SwipeAction] = [],
-      action: (() -> Void)? = nil
-    ) {
-      self.id = id
-      self.title = title
-      self.subtitle = subtitle
-      self.icon = icon.map { Icon($0) }
-      self.leadingSwipeActions = leadingSwipeActions
-      self.trailingSwipeActions = trailingSwipeActions
-      self.action = action
-    }
+  init(id: HTMLId? = nil, title: String, subtitle: String? = nil, icon: F7Icon? = nil) {
+    self.id = id
+    self.title = title
+    self.subtitle = subtitle
+    self.icon = icon.map { Icon($0) }
+  }
 
-    var body: Element {
-      HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
-        if let action {
-          HTML(.a, classList: hasSwipeOut ? [.itemLink, .itemContent, .swipeoutContent] : [.itemLink, .itemContent]) {
-            $1.href = "#"
-            _ = $1.addEventListener(
-              "click",
-              JSClosure { _ in
-                action()
-                return .undefined
-              }
-            )
-          } containing: {
-            content
-          }
-        } else {
-          HTML(.div, classList: hasSwipeOut ? [.itemContent, .swipeoutContent] : [.itemContent]) {
-            content
-          }
-        }
-      }
-    }
-
-    @ElementBuilder
-    private var content: [Element] {
-      if let icon {
-        HTML(.div, class: .itemMedia) {
-          icon
-        }
-        HTML(.div, class: .itemInner) {
-          HTML(.div, class: .itemTitle) { $1.innerText = .string(title) }
-          if let subtitle {
-            HTML(.div, class: .itemAfter) { $1.innerText = .string(subtitle) }
-          }
-        }
-      }
-      if leadingSwipeActions.isEmpty == false {
-        HTML(.div, class: .swipeoutActionsLeft) {
-          for item in leadingSwipeActions {
-            HTML(.a, class: .swipeoutClose) {
-              $1.href = "#"
-              $1.innerText = .string(item.title)
-              _ = $1.addEventListener(
-                "click",
-                JSClosure { _ in
-                  item.action()
-                  return .undefined
-                }
-              )
-            }
-          }
-        }
-      }
-      if trailingSwipeActions.isEmpty == false {
-        HTML(.div, class: .swipeoutActionsRight) {
-          for item in trailingSwipeActions {
-            HTML(.a, class: .swipeoutClose) {
-              $1.href = "#"
-              $1.innerText = .string(item.title)
-              _ = $1.addEventListener(
-                "click",
-                JSClosure { _ in
-                  item.action()
-                  return .undefined
-                }
-              )
-            }
-          }
-        }
+  var body: Element {
+    HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
+      HTML(.div, classList: hasSwipeOut ? [.itemContent, .swipeoutContent] : [.itemContent]) {
+        Self.content(title: title, subtitle: subtitle, icon: icon)
       }
     }
   }
 
-  struct SwipeAction {
+  private var hasSwipeOut: Bool { Environment[Swipeout.self].isEmpty == false }
+
+  fileprivate static func content(title: String, subtitle: String?, icon: Icon?) -> [Element] {
+    let media = icon.map { icon in
+      HTML(.div, class: .itemMedia) {
+        icon
+      }
+    }
+    let inner = HTML(.div, class: .itemInner) {
+      HTML(.div, class: .itemTitle) { $1.innerText = .string(title) }
+      if let subtitle {
+        HTML(.div, class: .itemAfter) { $1.innerText = .string(subtitle) }
+      }
+    }
+    let leadingSwipeout = Environment[Swipeout.self]
+      .first { $0.edge == .leading && $0.actions.isEmpty == false }
+      .map { group in
+        HTML(.div, class: .swipeoutActionsLeft) {
+          group.actions[0].addingClasses(.swipeoutOverswipe)
+          Array(group.actions.dropFirst())
+        }
+      }
+    let trailingSwipeout = Environment[Swipeout.self]
+      .first { $0.edge == .trailing && $0.actions.isEmpty == false }
+      .map { group in
+        HTML(.div, class: .swipeoutActionsRight) {
+          Array(group.actions.dropLast())
+          group.actions.last!.addingClasses(.swipeoutOverswipe)
+        }
+      }
+    return [media, inner, leadingSwipeout, trailingSwipeout].compactMap { $0 }
+  }
+}
+
+struct ActionListItem: ListItemElement {
+  let id: HTMLId?
+  let title: String
+  let subtitle: String?
+  let icon: Icon?
+  let action: () -> Void
+  let isItemLink: Bool
+
+  init(
+    id: HTMLId? = nil,
+    title: String,
+    subtitle: String? = nil,
+    icon: F7Icon? = nil,
+    action: @escaping () -> Void
+  ) {
+    self.init(
+      id: id,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      isItemLink: false,
+      action: action
+    )
+  }
+
+  fileprivate init(
+    id: HTMLId? = nil,
+    title: String,
+    subtitle: String? = nil,
+    icon: F7Icon? = nil,
+    isItemLink: Bool,
+    action: @escaping () -> Void
+  ) {
+    self.id = id
+    self.title = title
+    self.subtitle = subtitle
+    self.icon = icon.map { Icon($0) }
+    self.isItemLink = isItemLink
+    self.action = action
+  }
+
+  var body: Element {
+    var isSwiping = false
+    var delay: Task<Void, Never>?
+    var swipeIsOpen = false
+    return HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
+      _ = $1.addEventListener(
+        "swipeout",
+        JSClosure { _ in
+          isSwiping = true
+          delay?.cancel()
+          delay = Task {
+            do {
+              try await Task.sleep(for: .milliseconds(100))
+              isSwiping = false
+            } catch {}
+          }
+          return .undefined
+        }
+      )
+      _ = $1.addEventListener(
+        "swipeout:open",
+        JSClosure { _ in
+          swipeIsOpen = true
+          return .undefined
+        }
+      )
+      _ = $1.addEventListener(
+        "swipeout:closed",
+        JSClosure { _ in
+          swipeIsOpen = false
+          return .undefined
+        }
+      )
+    } containing: {
+      HTML(.div, classList: classList) {
+        $1.href = "#"
+        $1.style.cursor = "pointer"
+        _ = $1.addEventListener(
+          "click",
+          JSClosure { _ in
+            if isSwiping == false && swipeIsOpen == false {
+              action()
+            }
+            return .undefined
+          }
+        )
+      } containing: {
+        ListItem.content(title: title, subtitle: subtitle, icon: icon)
+      }
+    }
+  }
+
+  private var classList: [HTMLClass] {
+    var list = [HTMLClass.itemContent]
+    if hasSwipeOut {
+      list.append(.swipeoutContent)
+    }
+    if isItemLink {
+      list.append(.itemLink)
+    }
+    return list
+  }
+  private var hasSwipeOut: Bool { Environment[Swipeout.self].isEmpty == false }
+}
+
+struct NavigationListItem: ListItemElement {
+  let id: HTMLId?
+  let title: String
+  let subtitle: String?
+  let icon: F7Icon?
+  let destination: () -> Page
+
+  init(
+    id: HTMLId? = nil,
+    title: String,
+    subtitle: String? = nil,
+    icon: F7Icon? = nil,
+    destination: @escaping @autoclosure () -> Page
+  ) {
+    self.id = id
+    self.title = title
+    self.subtitle = subtitle
+    self.icon = icon
+    self.destination = destination
+  }
+
+  var body: Element {
+    ActionListItem(
+      id: id,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      isItemLink: true
+    ) {
+      App.navigate(to: destination())
+    }
+  }
+}
+
+// MARK: Swipeout
+
+struct Swipeout {
+  struct Action: Element, Sendable {
     let title: String
-    let action: () -> Void
+    var color: ThemeColor?
+    let action: @MainActor () -> Void
+
+    var body: Element {
+      HTML(.a, classList: classList) {
+        $1.href = "#"
+        $1.innerText = .string(title)
+        _ = $1.addEventListener(
+          "click",
+          JSClosure { _ in
+            action()
+            return .undefined
+          }
+        )
+      }
+    }
+
+    private var classList: [HTMLClass] {
+      if let color {
+        [.swipeoutClose, color.class]
+      } else {
+        [.swipeoutClose]
+      }
+    }
+  }
+
+  struct Group: Sendable {
+    enum Edge {
+      case leading, trailing
+    }
+
+    let edge: Edge
+    let actions: [Action]
+  }
+}
+extension Swipeout: EnvironmentKey {
+  static let defaultValue: [Group] = []
+}
+
+@resultBuilder
+struct SwipeoutBuilder {
+  static func buildBlock(_ components: Swipeout.Action...) -> [Swipeout.Group] {
+    [.init(edge: .trailing, actions: components)]
+  }
+  static func buildBlock(_ components: Swipeout.Group...) -> [Swipeout.Group] {
+    components
+  }
+}
+
+extension ListItemElement {
+  func swipeActions(@SwipeoutBuilder actions: () -> [Swipeout.Group]) -> Element {
+    self.environment(Swipeout.self, actions())
   }
 }
 
@@ -596,4 +773,5 @@ extension HTMLClass {
   static let swipeoutActionsLeft: Self = "swipeout-actions-left"
   static let swipeoutActionsRight: Self = "swipeout-actions-right"
   static let swipeoutClose: Self = "swipeout-close"
+  static let swipeoutOverswipe: Self = "swipeout-overswipe"
 }
