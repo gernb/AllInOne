@@ -79,6 +79,17 @@ struct FolderListing: Page {
 
   func willBeAdded() {
     NavBar.showBackButton(model.isRoot == false)
+    NavBar.setToolbarItems {
+      Popover {
+        Icon(.lineHorizontal3)
+      } content: {
+        List {
+          ActionListItem(title: "New Folder", icon: .folderBadgePlus, action: createFolder)
+          ActionListItem(title: "Upload File", icon: .arrowUpDoc, action: uploadFile)
+        }
+        .listStyle(.itemDividers)
+      }
+    }
     Task {
       try? await model.fetchCurrentDirectory()
     }
@@ -95,6 +106,46 @@ struct FolderListing: Page {
         }
       }
     }
+  }
+
+  private func createFolder() {
+    App.showPrompt(text: "Folder name:") {
+      let folderName = $0.trimmingCharacters(in: .whitespaces)
+      guard folderName.isEmpty == false else {
+        return
+      }
+      Task {
+        do {
+          try await model.createFolder(folderName)
+        } catch {
+          print(error.message)
+          App.showAlert(text: error.message, title: "Something went wrong")
+        }
+      }
+    }
+  }
+
+  private func uploadFile() {
+    let fileInput = HTML(.tag("input")) {
+      $1.style.display = "none"
+      $1.type = "file"
+      _ = $1.addEventListener(
+        "change",
+        JSClosure { args in
+          Task {
+            do {
+              try await model.upload(args[0].target.files)
+            } catch {
+              App.showAlert(text: error.message, title: "Something went wrong")
+            }
+          }
+          return .undefined
+        }
+      )
+    }
+    .render(parentNode: .undefined)
+    .jsValue
+    _ = fileInput.click()
   }
 }
 
@@ -140,11 +191,6 @@ final class FolderListingModel {
     try await fetchCurrentDirectory()
   }
 
-  func createFolder(_ name: String) async throws {
-    try await clientApi.createFolder(at: path(for: name))
-    try await fetchCurrentDirectory()
-  }
-
   func download(file: String) async throws {
     guard let response = try await clientApi.fetch(path: path(for: file))?.response,
       let obj = response.blob().object,
@@ -153,13 +199,57 @@ final class FolderListingModel {
       struct DownloadFailure: Swift.Error {}
       throw DownloadFailure()
     }
-    let href = Global.createObjectURL(blob)
     let link = HTML(.a) {
-      $1.href = href
+      $1.href = Global.createObjectURL(blob)
       $1.download = .string(file)
     }
     .render(parentNode: .undefined)
     .jsValue
     _ = link.click()
+  }
+
+  func createFolder(_ name: String) async throws {
+    try await clientApi.createFolder(at: path(for: name))
+    try await fetchCurrentDirectory()
+  }
+
+  func upload(_ files: JSValue) async throws {
+    struct UnknownError: Swift.Error {}
+    guard files.length == 1, let file = files[0].object, let name = file.name.string else {
+      throw UnknownError()
+    }
+    let path = path(for: name)
+    try await withCheckedThrowingContinuation { continuation in
+      let fileReader = Global.FileReader.new().jsValue
+      _ = fileReader.addEventListener(
+        "load",
+        JSClosure { [weak self] _ in
+          let bytesArray = JSObject.global.Uint8Array.function!.new(fileReader.result)
+          let fileData = JSTypedArray<UInt8>(unsafelyWrapping: bytesArray).withUnsafeBytes(Data.init(buffer:))
+          Task {
+            guard let self else {
+              continuation.resume()
+              return
+            }
+            do {
+              try await self.clientApi.put(file: fileData, at: path)
+              try await self.fetchCurrentDirectory()
+              continuation.resume()
+            } catch {
+              continuation.resume(throwing: error)
+            }
+          }
+          return .undefined
+        }
+      )
+      _ = fileReader.addEventListener(
+        "error",
+        JSClosure { _ in
+          continuation.resume(throwing: UnknownError())
+          return .undefined
+        }
+      )
+      _ = fileReader.readAsArrayBuffer(file)
+    }
   }
 }

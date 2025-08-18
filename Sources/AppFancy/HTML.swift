@@ -41,11 +41,15 @@ struct ElementBuilder {
 
 struct HTMLTag: ExpressibleByStringLiteral, RawRepresentable {
   let rawValue: String
+  static func tag(_ rawValue: String) -> Self { .init(rawValue) }
+  init(_ rawValue: String) {
+    self.rawValue = rawValue
+  }
   init(stringLiteral value: StringLiteralType) {
-    self.rawValue = value
+    self.init(value)
   }
   init?(rawValue: String) {
-    self.rawValue = rawValue
+    self.init(rawValue)
   }
 }
 extension HTMLTag {
@@ -69,11 +73,15 @@ extension String: HTMLId {
 
 struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
   let rawValue: String
+  static func `class`(_ rawValue: String) -> Self { .init(rawValue) }
+  init(_ rawValue: String) {
+    self.rawValue = rawValue
+  }
   init(stringLiteral value: StringLiteralType) {
-    self.rawValue = value
+    self.init(value)
   }
   init?(rawValue: String) {
-    self.rawValue = rawValue
+    self.init(rawValue)
   }
 }
 

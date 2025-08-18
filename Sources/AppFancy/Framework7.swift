@@ -1,3 +1,4 @@
+import Foundation
 import JavaScriptKit
 import SwiftNavigation
 
@@ -18,7 +19,6 @@ extension Element {
 }
 
 extension HTMLClass {
-  static let link: Self = "link"
   static let back: Self = "back"
   static let iconBack: Self = "icon-back"
   static let preloader: Self = "preloader"
@@ -85,22 +85,6 @@ struct NavBar: Element {
   let showBackground: Bool
   let content: () -> [Element]
 
-  private static let backButtonId = "backButtonId"
-  private static let backButton = HTML(.a, classes: .link, .back) {
-    $1.href = "#"
-    $1.id = .string(backButtonId)
-  } containing: {
-    HTML(.i, classes: .icon, .iconBack)
-    HTML(.span) {
-      $1.innerText = "Back"
-    }
-  }
-
-  static func showBackButton(_ show: Bool = true) {
-    let backButton = App.doc.getElementById(NavBar.backButtonId)
-    backButton.style.display = show ? "inline" : "none"
-  }
-
   init(showBackground: Bool = true, @ElementBuilder content: @escaping () -> [Element]) {
     self.showBackground = showBackground
     self.content = content
@@ -122,12 +106,28 @@ struct NavBar: Element {
       }
       HTML(.div, class: .navbarInner) {
         HTML(.div, class: .left) {
-          Self.backButton
+          Link(id: Self.backButton, classes: [.back]) {
+            HTML(.i, classes: .icon, .iconBack)
+            HTML(.span) {
+              $1.innerText = "Back"
+            }
+          }
         }
         content()
-        HTML(.div, class: .right)
+        HTML(.div, id: Self.toolbar, class: .right)
       }
     }
+  }
+
+  static let toolbar = IdentifiedNode()
+  static let backButton = IdentifiedNode()
+
+  static func showBackButton(_ show: Bool = true) {
+    backButton.style.display = show ? "inline" : "none"
+  }
+  static func setToolbarItems(@ElementBuilder items: () -> [Element]) {
+    toolbar.clear()
+    items().forEach(toolbar.add)
   }
 }
 
@@ -160,11 +160,103 @@ extension HTMLClass {
   static let cardContent: Self = "card-content"
 }
 
+// MARK: Link
+
+struct Link: Element {
+  let id: HTMLId?
+  let classes: [HTMLClass]
+  let content: () -> [Element]
+  let action: (() -> Void)?
+
+  init(
+    _ label: String,
+    id: HTMLId? = nil,
+    classes: [HTMLClass] = [],
+    action: @escaping () -> Void
+  ) {
+    self.init(id: id, classes: classes, action: action) {
+      HTML(.span) {
+        $1.innerText = .string(label)
+      }
+    }
+  }
+
+  init(
+    id: HTMLId? = nil,
+    action: @escaping () -> Void,
+    @ElementBuilder content: @escaping () -> [Element]
+  ) {
+    self.init(id: id, classes: [], action: action, content: content)
+  }
+
+  fileprivate init(
+    id: HTMLId? = nil,
+    classes: [HTMLClass],
+    action: (() -> Void)? = nil,
+    @ElementBuilder content: @escaping () -> [Element]
+  ) {
+    self.id = id
+    self.classes = classes
+    self.action = action
+    self.content = content
+  }
+
+  var body: Element {
+    HTML(
+      .a,
+      id: id,
+      classList: classList,
+      builder: {
+        $1.href = "#"
+        if let action {
+          _ = $1.addEventListener(
+            "click",
+            JSClosure { _ in
+              action()
+              return .undefined
+            }
+          )
+        }
+      },
+      containing: content
+    )
+  }
+
+  private var classList: [HTMLClass] {
+    if Environment[Popover.InsidePopover.self] {
+      [.link, .popoverClose] + classes
+    } else {
+      [.link] + classes
+    }
+  }
+}
+
+extension HTMLClass {
+  static let link: Self = "link"
+}
+
 // MARK: Button
 
 struct Button: Element {
-  let label: String
+  let label: () -> [Element]
   let action: () -> Void
+
+  init(
+    action: @escaping () -> Void,
+    @ElementBuilder label: @escaping () -> [Element]
+  ) {
+    self.label = label
+    self.action = action
+  }
+
+  init(
+    _ label: String,
+    action: @escaping () -> Void
+  ) {
+    self.init(action: action) {
+      HTML(.span) { $1.innerText = .string(label) }
+    }
+  }
 
   var body: Element {
     let classList = [
@@ -173,17 +265,22 @@ struct Button: Element {
       Environment[Button.Fill.self].class,
       Environment[Button.Size.self].class,
       Environment[Button.Raised.self] ? .buttonRaised : nil,
+      Environment[Popover.InsidePopover.self] ? .popoverClose : nil,
     ].compactMap { $0 }
-    return HTML(.button, classList: classList) {
-      $1.innerText = .string(label)
-      _ = $1.addEventListener(
-        "click",
-        JSClosure { _ in
-          action()
-          return .undefined
-        }
-      )
-    }
+    return HTML(
+      .button,
+      classList: classList,
+      builder: {
+        _ = $1.addEventListener(
+          "click",
+          JSClosure { _ in
+            action()
+            return .undefined
+          }
+        )
+      },
+      containing: label
+    )
   }
 }
 
@@ -446,12 +543,18 @@ extension HTMLClass {
 }
 
 enum F7Icon: String {
+  case arrowUpDoc = "arrow_up_doc"
+  case arrowUpDocFill = "arrow_up_doc_fill"
   case docPlaintext = "doc_plaintext"
   case docText = "doc_text"
   case docTextFill = "doc_text_fill"
+  case ellipsis
   case folder
+  case folderBadgePlus = "folder_badge_plus"
   case folderFill = "folder_fill"
+  case folderFillBadgePlus = "folder_fill_badge_plus"
   case house
+  case lineHorizontal3 = "line_horizontal_3"
 }
 
 // MARK: Colours
@@ -489,17 +592,43 @@ enum ThemeColor {
 
 struct List: Element {
   let id: HTMLId?
-  let content: () -> [ListItemElement]
+  let content: () -> [Element]
 
-  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [ListItemElement] = {[]}) {
+  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [Element] = {[]}) {
     self.id = id
     self.content = content
   }
 
   var body: Element {
-    HTML(.div, class: .list) {
+    HTML(.div, classList: classList) {
       HTML(.ul, id: id, containing: content)
     }
+  }
+
+  private var classList: [HTMLClass] {
+    if let style = Environment[Style.self] {
+      [.list, style.class]
+    } else {
+      [.list]
+    }
+  }
+}
+extension List {
+  enum Style: EnvironmentKey {
+    case itemDividers, outline
+    static let defaultValue: Style? = nil
+    var `class`: HTMLClass {
+      switch self {
+      case .itemDividers: .listDividers
+      case .outline: .listOutline
+      }
+    }
+  }
+}
+
+extension Element {
+  func listStyle(_ style: List.Style?) -> Element {
+    self.environment(List.Style.self, style)
   }
 }
 
@@ -636,7 +765,6 @@ struct ActionListItem: ListItemElement {
       )
     } containing: {
       HTML(.div, classList: classList) {
-        $1.href = "#"
         $1.style.cursor = "pointer"
         _ = $1.addEventListener(
           "click",
@@ -660,6 +788,9 @@ struct ActionListItem: ListItemElement {
     }
     if isItemLink {
       list.append(.itemLink)
+    }
+    if Environment[Popover.InsidePopover.self] {
+      list.append(.popoverClose)
     }
     return list
   }
@@ -709,17 +840,7 @@ struct Swipeout {
     let action: @MainActor () -> Void
 
     var body: Element {
-      HTML(.a, classList: classList) {
-        $1.href = "#"
-        $1.innerText = .string(title)
-        _ = $1.addEventListener(
-          "click",
-          JSClosure { _ in
-            action()
-            return .undefined
-          }
-        )
-      }
+      Link(title, classes: classList, action: action)
     }
 
     private var classList: [HTMLClass] {
@@ -762,6 +883,8 @@ extension ListItemElement {
 
 extension HTMLClass {
   static let list: Self = "list"
+  static let listDividers: Self = "list-dividers"
+  static let listOutline: Self = "list-outline"
   static let itemContent: Self = "item-content"
   static let itemMedia: Self = "item-media"
   static let itemInner: Self = "item-inner"
@@ -774,4 +897,53 @@ extension HTMLClass {
   static let swipeoutActionsRight: Self = "swipeout-actions-right"
   static let swipeoutClose: Self = "swipeout-close"
   static let swipeoutOverswipe: Self = "swipeout-overswipe"
+}
+
+// MARK: Popover
+
+struct Popover: Element {
+  let label: () -> [Element]
+  let content: () -> [Element]
+  let instance = "my-popover-" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
+
+  init(
+    @ElementBuilder label: @escaping () -> [Element],
+    @ElementBuilder content: @escaping () -> [Element]
+  ) {
+    self.label = label
+    self.content = content
+  }
+
+  init(
+    _ label: String,
+    @ElementBuilder content: @escaping () -> [Element]
+  ) {
+    self.label = { [HTML(.span) { $1.innerText = .string(label) }] }
+    self.content = content
+  }
+
+  var body: Element {
+    HTML(.a, classes: .link, .popoverOpen) {
+      $1.href = "#"
+      $1.dataset.popover = .string("." + instance)
+    } containing: {
+      label()
+      HTML(.div, classes: .popover, .class(instance)) {
+        HTML(.div, class: .popoverInner, containing: content)
+      }
+      .environment(InsidePopover.self, true)
+    }
+  }
+}
+extension Popover {
+  struct InsidePopover: EnvironmentKey {
+    static let defaultValue = false
+  }
+}
+
+extension HTMLClass {
+  static let popover: Self = "popover"
+  static let popoverOpen: Self = "popover-open"
+  static let popoverClose: Self = "popover-close"
+  static let popoverInner: Self = "popover-inner"
 }

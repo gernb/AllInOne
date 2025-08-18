@@ -26,15 +26,13 @@ struct App {
 
     let loadingPage = doc.getElementById("loadingPage")
     let parentNode = f7app.views.main.el as JSValue
-    _ = f7app.views.main.el.insertBefore(NavBar(title: "Fancy App").render(parentNode: parentNode), loadingPage)
+    _ = f7app.views.main.el.insertBefore(NavBar(title: "Mobile File Browser").render(parentNode: parentNode), loadingPage)
 
     _ = dom7(doc).on(
       "page:beforein",
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        // print("page:beforein", name)
-        // _ = JSObject.global.console.log(f7page)
         guard let entry = pages[name] else {
           return .undefined
         }
@@ -52,7 +50,6 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        // print("page:afterin", name)
         pages[name]?.page.onAdded()
         return .undefined
       }
@@ -62,7 +59,6 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        // print("page:beforeout", name)
         pages[name]?.page.willBeRemoved()
         return .undefined
       }
@@ -72,7 +68,6 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        // print("page:afterout", name)
         guard let entry = pages[name] else {
           return .undefined
         }
@@ -89,7 +84,6 @@ struct App {
       JSClosure { args in
         let f7page = args[1].object!
         let name = f7page.name.string!
-        // print("page:beforeremove", name)
         pages[name] = nil
         return .undefined
       }
@@ -142,6 +136,29 @@ struct App {
         cancelled()
         return .undefined
       }
+    )
+  }
+
+  static func showPrompt(
+    text: String,
+    title: String? = nil,
+    defaultValue: String = "",
+    confirmed: @escaping (String) -> Void,
+    cancelled: @escaping () -> Void = {}
+  ) {
+    _ = f7app.dialog.prompt(
+      text,
+      title,
+      JSClosure { args in
+        let value = args[0].string!
+        confirmed(value)
+        return .undefined
+      },
+      JSClosure { _ in
+        cancelled()
+        return .undefined
+      },
+      defaultValue
     )
   }
 

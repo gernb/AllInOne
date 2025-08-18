@@ -3,6 +3,8 @@
 public enum Global {
   public static let tzOffset = -Date.new().jsValue.getTimezoneOffset().number!
   public static let createObjectURL = JSObject.global.URL.function!.createObjectURL.function!
+  public static let FileReader = JSObject.global.FileReader.function!
+  public static let console = JSObject.global.console
 
   static let Date = JSObject.global.Date.function!
 }

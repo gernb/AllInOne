@@ -83,7 +83,7 @@ public final class MainViewModel {
       return
     }
     let path = fullPath(for: name)
-    let fileReader = JSObject.global.FileReader.function!.new().jsValue
+    let fileReader = Global.FileReader.new().jsValue
     fileReader.event("load") { [weak self] in
       let bytesArray = JSObject.global.Uint8Array.function!.new(fileReader.result)
       let fileData = JSTypedArray<UInt8>(unsafelyWrapping: bytesArray).withUnsafeBytes(
