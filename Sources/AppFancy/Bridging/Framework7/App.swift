@@ -1,33 +1,15 @@
-import AppShared
-import JavaScriptEventLoop
 import JavaScriptKit
 import SwiftNavigation
 
 @MainActor
-@main
 struct App {
-  static private(set) var doc: JSValue!
-  static private(set) var f7app: JSValue!
-  static private(set) var dom7: JSFunction!
+  static let doc = JSObject.global.document
+  static let f7app = JSObject.global.app
+  static let dom7 = JSObject.global.Dom7.function!
 
-  static private var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
-
-  static func main() {
-    JavaScriptEventLoop.installGlobalExecutor()
-    print("Running…")
-    setup()
-    navigate(to: FolderListing(), transition: .flip)
-  }
+  static var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
 
   static func setup() {
-    doc = JSObject.global.document
-    dom7 = JSObject.global.Dom7.function
-    f7app = JSObject.global.app
-
-    let loadingPage = doc.getElementById("loadingPage")
-    let parentNode = f7app.views.main.el as JSValue
-    _ = f7app.views.main.el.insertBefore(NavBar(title: "Mobile File Browser").render(parentNode: parentNode), loadingPage)
-
     _ = dom7(doc).on(
       "page:beforein",
       JSClosure { args in
@@ -87,24 +69,6 @@ struct App {
         pages[name] = nil
         return .undefined
       }
-    )
-  }
-
-  static func navigate(to page: Page, transition: Transition? = nil) {
-    let options: JSObject
-    if let transition {
-      options = ["transition": transition.rawValue].jsObject()
-    } else {
-      options = [:].jsObject()
-    }
-    pages[page.name] = (page, [])
-    let parentNode = f7app.views.main.el as JSValue
-    _ = f7app.views.main.router.navigate(
-      [
-        "url": "/swift/\(page.name)",
-        "route": ["el": page.render(parentNode: parentNode)],
-      ].jsObject(),
-      options
     )
   }
 

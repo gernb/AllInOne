@@ -78,8 +78,8 @@ struct FolderListing: Page {
   }
 
   func willBeAdded() {
-    NavBar.showBackButton(model.isRoot == false)
-    NavBar.setToolbarItems {
+    Environment[NavBar.self]?.showBackButton(model.isRoot == false)
+    Environment[NavBar.self]?.setToolbarItems {
       Popover {
         Icon(.lineHorizontal3)
       } content: {
@@ -164,8 +164,6 @@ final class FolderListingModel {
   private(set) var files: [String] = []
 
   private let clientApi = ClientAPI.live
-  @PerceptionIgnored
-  private var toast: JSValue?
 
   init(path: String) {
     self.path = path
