@@ -1,4 +1,5 @@
 import JavaScriptKit
+import SwiftNavigation
 
 @MainActor
 final class View {
@@ -6,10 +7,74 @@ final class View {
 
   let node: JSValue
 
+  private static var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
   private var navbar: NavBar?
 
   private init(_ node: JSValue) {
     self.node = node
+  }
+
+  static func setup() {
+    _ = App.dom7(App.doc).on(
+      "page:beforein",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        guard let entry = pages[name] else {
+          return .undefined
+        }
+        let page = entry.page
+        var tokens = entry.tokens
+        tokens = [observe { page.observing() }]
+        tokens.formUnion(page.observables())
+        pages[name] = (page, tokens)
+        page.willBeAdded()
+        return .undefined
+      }
+    )
+    _ = App.dom7(App.doc).on(
+      "page:afterin",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        pages[name]?.page.onAdded()
+        return .undefined
+      }
+    )
+    _ = App.dom7(App.doc).on(
+      "page:beforeout",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        pages[name]?.page.willBeRemoved()
+        return .undefined
+      }
+    )
+    _ = App.dom7(App.doc).on(
+      "page:afterout",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        guard let entry = pages[name] else {
+          return .undefined
+        }
+        let page = entry.page
+        var tokens = entry.tokens
+        page.onRemoved()
+        tokens.removeAll()
+        pages[name] = (page, tokens)
+        return .undefined
+      }
+    )
+    _ = App.dom7(App.doc).on(
+      "page:beforeremove",
+      JSClosure { args in
+        let f7page = args[1].object!
+        let name = f7page.name.string!
+        pages[name] = nil
+        return .undefined
+      }
+    )
   }
 
   func insert(element: Element, before id: String) {
@@ -30,7 +95,7 @@ final class View {
     let page = destination
       .environment(NavBar.self, navbar?.instance)
       .environment(View.self, self)
-    App.pages[page.name] = (page, [])
+    Self.pages[page.name] = (page, [])
     _ = node.router.navigate(
       [
         "url": "/swift/\(page.name)",

@@ -1,6 +1,10 @@
 import JavaScriptKit
 
 struct NavBar: Element {
+  static var current: NavBar.Instance? {
+    Environment[NavBar.self]
+  }
+
   let showBackground: Bool
   let content: () -> [Element]
 

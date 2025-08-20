@@ -78,8 +78,8 @@ struct FolderListing: Page {
   }
 
   func willBeAdded() {
-    Environment[NavBar.self]?.showBackButton(model.isRoot == false)
-    Environment[NavBar.self]?.setToolbarItems {
+    NavBar.current?.showBackButton(model.isRoot == false)
+    NavBar.current?.setToolbarItems {
       Popover {
         Icon(.lineHorizontal3)
       } content: {

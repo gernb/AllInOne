@@ -23,15 +23,11 @@ struct Popover: Element {
   }
 
   var body: Element {
-    HTML(.a, classes: .link, .popoverOpen) {
-      $1.href = "#"
-      $1.dataset.popover = .string("." + instance)
-    } containing: {
+    let popoverTarget = IdentifiedNode()
+    return Link(id: popoverTarget) {
+      App.showPopover(relativeTo: popoverTarget, content: content)
+    } content: {
       label()
-      HTML(.div, classes: .popover, .class(instance)) {
-        HTML(.div, class: .popoverInner, containing: content)
-      }
-      .environment(InsidePopover.self, true)
     }
   }
 }
@@ -47,4 +43,5 @@ extension HTMLClass {
   static let popoverOpen: Self = "popover-open"
   static let popoverClose: Self = "popover-close"
   static let popoverInner: Self = "popover-inner"
+  static let popoverArrow: Self = "popover-arrow"
 }

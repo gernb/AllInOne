@@ -1,5 +1,4 @@
 import JavaScriptKit
-import SwiftNavigation
 
 @MainActor
 struct App {
@@ -7,69 +6,8 @@ struct App {
   static let f7app = JSObject.global.app
   static let dom7 = JSObject.global.Dom7.function!
 
-  static var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
-
   static func setup() {
-    _ = dom7(doc).on(
-      "page:beforein",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        guard let entry = pages[name] else {
-          return .undefined
-        }
-        let page = entry.page
-        var tokens = entry.tokens
-        tokens = [observe { page.observing() }]
-        tokens.formUnion(page.observables())
-        pages[name] = (page, tokens)
-        page.willBeAdded()
-        return .undefined
-      }
-    )
-    _ = dom7(doc).on(
-      "page:afterin",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        pages[name]?.page.onAdded()
-        return .undefined
-      }
-    )
-    _ = dom7(doc).on(
-      "page:beforeout",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        pages[name]?.page.willBeRemoved()
-        return .undefined
-      }
-    )
-    _ = dom7(doc).on(
-      "page:afterout",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        guard let entry = pages[name] else {
-          return .undefined
-        }
-        let page = entry.page
-        var tokens = entry.tokens
-        page.onRemoved()
-        tokens.removeAll()
-        pages[name] = (page, tokens)
-        return .undefined
-      }
-    )
-    _ = dom7(doc).on(
-      "page:beforeremove",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        pages[name] = nil
-        return .undefined
-      }
-    )
+    View.setup()
   }
 
   static func showAlert(text: String, title: String? = nil, onDismiss: @escaping () -> Void = {}) {
@@ -124,6 +62,27 @@ struct App {
       },
       defaultValue
     )
+  }
+
+  static func showPopover(relativeTo target: IdentifiedNode, @ElementBuilder content: @escaping () -> [Element]) {
+    let node = HTML(.div, classes: .popover) {
+      HTML(.div, class: .popoverArrow)
+      HTML(.div, class: .popoverInner, containing: content)
+        .environment(Popover.InsidePopover.self, true)
+    }
+    .render(parentNode: .undefined)
+    let popover = f7app.popover.create([
+      "el": node,
+      "targetEl": target.node,
+      "on": [
+        "closed": JSClosure { args in
+          let popover = args[0]
+          _ = popover.destroy()
+          return .undefined
+        }
+      ]
+    ].jsObject())
+    _ = popover.open()
   }
 
   @discardableResult
