@@ -1,25 +1,25 @@
 import JavaScriptKit
 
 struct Icon: Element {
-  let icon: String
+  let iOSIcon: String
+  let mdIcon: String
 
-  init(_ icon: String) {
-    self.icon = icon
+  init(iOSIcon: String, mdIcon: String? = nil) {
+    self.iOSIcon = iOSIcon
+    self.mdIcon = mdIcon ?? iOSIcon
   }
+
   init(_ icon: F7Icon) {
-    self.init(icon.rawValue)
-  }
-  init(_ icon: any RawRepresentable<String>) {
-    self.init(icon.rawValue)
+    self.init(iOSIcon: icon.rawValue, mdIcon: icon.mdIcon)
   }
 
   var body: Element {
     HTML(.span) {
       HTML(.i, classes: .icon, .f7Icons, .ifNotMD) {
-        $1.innerText = .string(icon)
+        $1.innerText = .string(iOSIcon)
       }
       HTML(.i, classes: .icon, .materialIcons, .mdOnly) {
-        $1.innerText = .string(icon)
+        $1.innerText = .string(mdIcon)
       }
     }
   }
@@ -47,4 +47,14 @@ enum F7Icon: String {
   case folderFillBadgePlus = "folder_fill_badge_plus"
   case house
   case lineHorizontal3 = "line_horizontal_3"
+
+  var mdIcon: String {
+    switch self {
+    case .arrowUpDoc: "upload_file"
+    case .docTextFill: "text_snippet"
+    case .folderBadgePlus: "create_new_folder"
+    case .lineHorizontal3: "menu"
+    default: rawValue
+    }
+  }
 }
