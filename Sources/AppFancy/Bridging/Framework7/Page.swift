@@ -19,11 +19,11 @@ extension Page {
   var body: Element {
     HTML(
       .div,
-      class: .page,
+      classes: .page,
       builder: { $1.dataset.name = .string(name) },
       containing: {
         controls + [
-          HTML(.div, class: .pageContent, containing: { content })
+          HTML(.div, classes: .pageContent, containing: { content })
         ]
       }
     )

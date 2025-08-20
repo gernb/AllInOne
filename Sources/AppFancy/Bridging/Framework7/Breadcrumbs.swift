@@ -34,12 +34,12 @@ struct Breadcrumbs: Element {
   }
 
   var body: Element {
-    HTML(.div, class: .breadcrumbs) {
+    HTML(.div, classes: .breadcrumbs) {
       if let first = items.first {
         let classes: [HTMLClass] = items.count == 1 ? [.breadcrumbsItem, .breadcrumbsItemActive] : [.breadcrumbsItem]
         first.addingClasses(classes)
         for (index, item) in items.enumerated().dropFirst() {
-          HTML(.div, class: .breadcrumbsSeparator)
+          HTML(.div, classes: .breadcrumbsSeparator)
           let classes: [HTMLClass] = index == (items.count - 1) ? [.breadcrumbsItem, .breadcrumbsItemActive] : [.breadcrumbsItem]
           item.addingClasses(classes)
         }

@@ -1,11 +1,11 @@
 import JavaScriptKit
 
 struct Card: Element {
-  @ElementBuilder let content: () -> [Element]
+  @ElementBuilder let content: HTML.Contents
 
   var body: Element {
     HTML(.div, classes: .card, .cardContentPadding, .cardRaised, .cardOutline) {
-      HTML(.div, class: .cardContent, containing: content)
+      HTML(.div, classes: .cardContent, containing: content)
     }
   }
 }

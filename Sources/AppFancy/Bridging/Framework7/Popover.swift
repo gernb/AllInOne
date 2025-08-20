@@ -2,13 +2,13 @@ import Foundation
 import JavaScriptKit
 
 struct Popover: Element {
-  let label: () -> [Element]
-  let content: () -> [Element]
+  let label: HTML.Contents
+  let content: HTML.Contents
   let instance = "my-popover-" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
 
   init(
-    @ElementBuilder label: @escaping () -> [Element],
-    @ElementBuilder content: @escaping () -> [Element]
+    @ElementBuilder label: @escaping HTML.Contents,
+    @ElementBuilder content: @escaping HTML.Contents
   ) {
     self.label = label
     self.content = content
@@ -16,7 +16,7 @@ struct Popover: Element {
 
   init(
     _ label: String,
-    @ElementBuilder content: @escaping () -> [Element]
+    @ElementBuilder content: @escaping HTML.Contents
   ) {
     self.label = { [HTML(.span) { $1.innerText = .string(label) }] }
     self.content = content

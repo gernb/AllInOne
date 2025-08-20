@@ -4,7 +4,7 @@ struct PullToRefresh: Element {
   let action: () async -> Void
 
   var body: Element {
-    HTML(.div, class: .ptrPreloader) { parentNode, _ in
+    HTML(.div, classes: .ptrPreloader) { parentNode, _ in
       assert(parentNode.className.string == HTMLClass.pageContent.rawValue)
       _ = parentNode.classList.add(HTMLClass.pagePullToRefresh.rawValue)
       parentNode.dataset.ptrMousewheel = .boolean(true)
@@ -20,8 +20,8 @@ struct PullToRefresh: Element {
         }
       )
     } containing: {
-      HTML(.div, class: .preloader)
-      HTML(.div, class: .ptrArrow)
+      HTML(.div, classes: .preloader)
+      HTML(.div, classes: .ptrArrow)
     }
   }
 }

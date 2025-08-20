@@ -3,7 +3,7 @@ import JavaScriptKit
 struct Link: Element {
   let id: HTMLId?
   let classes: [HTMLClass]
-  let content: () -> [Element]
+  let content: HTML.Contents
   let action: (() -> Void)?
 
   init(
@@ -22,7 +22,7 @@ struct Link: Element {
   init(
     id: HTMLId? = nil,
     action: @escaping () -> Void,
-    @ElementBuilder content: @escaping () -> [Element]
+    @ElementBuilder content: @escaping HTML.Contents
   ) {
     self.init(id: id, classes: [], action: action, content: content)
   }
@@ -31,7 +31,7 @@ struct Link: Element {
     id: HTMLId? = nil,
     classes: [HTMLClass],
     action: (() -> Void)? = nil,
-    @ElementBuilder content: @escaping () -> [Element]
+    @ElementBuilder content: @escaping HTML.Contents
   ) {
     self.id = id
     self.classes = classes

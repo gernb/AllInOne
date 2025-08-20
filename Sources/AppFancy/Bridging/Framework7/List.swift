@@ -4,9 +4,9 @@ import JavaScriptKit
 
 struct List: Element {
   let id: HTMLId?
-  let content: () -> [Element]
+  let content: HTML.Contents
 
-  init(id: HTMLId? = nil, @ElementBuilder content: @escaping () -> [Element] = { [] }) {
+  init(id: HTMLId? = nil, @ElementBuilder content: @escaping HTML.Contents = { [] }) {
     self.id = id
     self.content = content
   }
@@ -52,7 +52,7 @@ protocol ListItemElement: Element {}
 struct ListItem: ListItemElement {
   let id: HTMLId?
   let title: String
-  let trailingAccessory: (() -> [Element])?
+  let trailingAccessory: HTML.Contents?
   let icon: Icon?
 
   init(id: HTMLId? = nil, title: String, icon: F7Icon? = nil) {
@@ -66,7 +66,7 @@ struct ListItem: ListItemElement {
     id: HTMLId? = nil,
     title: String,
     icon: F7Icon? = nil,
-    @ElementBuilder trailingAccessory: @escaping () -> [Element]
+    @ElementBuilder trailingAccessory: @escaping HTML.Contents
   ) {
     self.id = id
     self.title = title
@@ -84,22 +84,22 @@ struct ListItem: ListItemElement {
 
   private var hasSwipeOut: Bool { Environment[Swipeout.self].isEmpty == false }
 
-  fileprivate static func content(title: String, icon: Icon?, trailingAccessory: (() -> [Element])?) -> [Element] {
+  fileprivate static func content(title: String, icon: Icon?, trailingAccessory: HTML.Contents?) -> [Element] {
     let media = icon.map { icon in
-      HTML(.div, class: .itemMedia) {
+      HTML(.div, classes: .itemMedia) {
         icon
       }
     }
-    let inner = HTML(.div, class: .itemInner) {
-      HTML(.div, class: .itemTitle) { $1.innerText = .string(title) }
+    let inner = HTML(.div, classes: .itemInner) {
+      HTML(.div, classes: .itemTitle) { $1.innerText = .string(title) }
       if let trailingAccessory {
-        HTML(.div, class: .itemAfter, containing: trailingAccessory)
+        HTML(.div, classes: .itemAfter, containing: trailingAccessory)
       }
     }
     let leadingSwipeout = Environment[Swipeout.self]
       .first { $0.edge == .leading && $0.actions.isEmpty == false }
       .map { group in
-        HTML(.div, class: .swipeoutActionsLeft) {
+        HTML(.div, classes: .swipeoutActionsLeft) {
           group.actions[0].addingClasses(.swipeoutOverswipe)
           Array(group.actions.dropFirst())
         }
@@ -107,7 +107,7 @@ struct ListItem: ListItemElement {
     let trailingSwipeout = Environment[Swipeout.self]
       .first { $0.edge == .trailing && $0.actions.isEmpty == false }
       .map { group in
-        HTML(.div, class: .swipeoutActionsRight) {
+        HTML(.div, classes: .swipeoutActionsRight) {
           Array(group.actions.dropLast())
           group.actions.last!.addingClasses(.swipeoutOverswipe)
         }
@@ -120,7 +120,7 @@ struct ActionListItem: ListItemElement {
   let id: HTMLId?
   let title: String
   let icon: Icon?
-  let trailingAccessory: (() -> [Element])?
+  let trailingAccessory: HTML.Contents?
   let action: () -> Void
 
   init(
@@ -141,7 +141,7 @@ struct ActionListItem: ListItemElement {
     title: String,
     icon: F7Icon? = nil,
     action: @escaping () -> Void,
-    @ElementBuilder trailingAccessory: @escaping () -> [Element]
+    @ElementBuilder trailingAccessory: @escaping HTML.Contents
   ) {
     self.id = id
     self.title = title

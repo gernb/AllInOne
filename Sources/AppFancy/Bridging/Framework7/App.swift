@@ -64,10 +64,10 @@ struct App {
     )
   }
 
-  static func showPopover(relativeTo target: IdentifiedNode, @ElementBuilder content: @escaping () -> [Element]) {
+  static func showPopover(relativeTo target: IdentifiedNode, @ElementBuilder content: @escaping HTML.Contents) {
     let node = HTML(.div, classes: .popover) {
-      HTML(.div, class: .popoverArrow)
-      HTML(.div, class: .popoverInner, containing: content)
+      HTML(.div, classes: .popoverArrow)
+      HTML(.div, classes: .popoverInner, containing: content)
         .environment(Popover.InsidePopover.self, true)
     }
     .render(parentNode: .undefined)

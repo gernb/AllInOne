@@ -39,9 +39,15 @@ struct ElementBuilder {
   }
 }
 
+protocol HTMLId {
+  var id: String { get }
+}
+extension String: HTMLId {
+  var id: String { self }
+}
+
 struct HTMLTag: ExpressibleByStringLiteral, RawRepresentable {
   let rawValue: String
-  static func tag(_ rawValue: String) -> Self { .init(rawValue) }
   init(_ rawValue: String) {
     self.rawValue = rawValue
   }
@@ -53,6 +59,7 @@ struct HTMLTag: ExpressibleByStringLiteral, RawRepresentable {
   }
 }
 extension HTMLTag {
+  static func tag(_ rawValue: String) -> Self { .init(rawValue) }
   static let div: Self = "div"
   static let span: Self = "span"
   static let p: Self = "p"
@@ -64,16 +71,8 @@ extension HTMLTag {
   static let li: Self = "li"
 }
 
-protocol HTMLId {
-  var id: String { get }
-}
-extension String: HTMLId {
-  var id: String { self }
-}
-
 struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
   let rawValue: String
-  static func `class`(_ rawValue: String) -> Self { .init(rawValue) }
   init(_ rawValue: String) {
     self.rawValue = rawValue
   }
@@ -84,26 +83,30 @@ struct HTMLClass: ExpressibleByStringLiteral, Hashable, RawRepresentable {
     self.init(rawValue)
   }
 }
+extension HTMLClass {
+  static func `class`(_ rawValue: String) -> Self { .init(rawValue) }
+}
 
 struct HTML: Element {
   private static let doc = JSObject.global.document
   private static let emptyBuilder: Builder = { _, _ in }
-  private static let emptyContents: @Sendable () -> [Element] = {[]}
+  private static let emptyContents: Contents = {[]}
 
   typealias Builder = (_ parentNode: JSValue, _ node: JSValue) -> Void
+  typealias Contents = @MainActor () -> [Element]
 
   let tag: HTMLTag
   let id: HTMLId?
   let classList: [HTMLClass]
   let builder: Builder
-  let contents: () -> [Element]
+  let contents: Contents
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId?,
-    classList: [HTMLClass],
+    id: HTMLId? = nil,
+    classList: [HTMLClass] = [],
     builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
+    @ElementBuilder containing contents: @escaping Contents
   ) {
     self.tag = tag
     self.id = id
@@ -112,51 +115,18 @@ struct HTML: Element {
     self.contents = contents
   }
 
-  init(_ tag: HTMLTag) {
-    self.init(tag, id: nil, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
-  }
-
-  init(_ tag: HTMLTag, id: HTMLId?) {
-    self.init(tag, id: id, classList: [], builder: Self.emptyBuilder, containing: Self.emptyContents)
-  }
-
-  init(_ tag: HTMLTag, builder: @escaping Builder) {
-    self.init(tag, id: nil, classList: [], builder: builder, containing: Self.emptyContents)
-  }
-
-  init(_ tag: HTMLTag, id: HTMLId?, builder: @escaping Builder) {
-    self.init(tag, id: id, classList: [], builder: builder, containing: Self.emptyContents)
-  }
-
   init(
     _ tag: HTMLTag,
-    classList: [HTMLClass],
-    @ElementBuilder containing contents: @escaping () -> [Element]
+    id: HTMLId? = nil,
+    classList: [HTMLClass] = []
   ) {
-    self.init(tag, id: nil, classList: classList, builder: Self.emptyBuilder, containing: contents)
+    self.init(tag, id: id, classList: classList, builder: Self.emptyBuilder, containing: Self.emptyContents)
   }
 
   init(
     _ tag: HTMLTag,
-    id: HTMLId?,
-    classList: [HTMLClass],
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: id, classList: classList, builder: Self.emptyBuilder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    classList: [HTMLClass],
-    builder: @escaping Builder
-  ) {
-    self.init(tag, id: nil, classList: classList, builder: builder, containing: Self.emptyContents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    classList: [HTMLClass],
+    id: HTMLId? = nil,
+    classList: [HTMLClass] = [],
     builder: @escaping Builder
   ) {
     self.init(tag, id: id, classList: classList, builder: builder, containing: Self.emptyContents)
@@ -164,23 +134,26 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    classList: [HTMLClass],
+    id: HTMLId? = nil,
+    classList: [HTMLClass] = [],
+    @ElementBuilder containing contents: @escaping Contents
+  ) {
+    self.init(tag, id: id, classList: classList, builder: Self.emptyBuilder, containing: contents)
+  }
+
+  init(
+    _ tag: HTMLTag,
+    id: HTMLId? = nil,
+    classes: HTMLClass...,
     builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
+    @ElementBuilder containing contents: @escaping Contents
   ) {
-    self.init(tag, id: nil, classList: classList, builder: builder, containing: contents)
+    self.init(tag, id: id, classList: Array(classes), builder: builder, containing: contents)
   }
 
   init(
     _ tag: HTMLTag,
-    classes: HTMLClass...
-  ) {
-    self.init(tag, id: nil, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
+    id: HTMLId? = nil,
     classes: HTMLClass...
   ) {
     self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: Self.emptyContents)
@@ -188,51 +161,7 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    classes: HTMLClass...,
-    builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: nil, classList: Array(classes), builder: builder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    classes: HTMLClass...,
-    builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: id, classList: Array(classes), builder: builder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    classes: HTMLClass...,
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: nil, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    classes: HTMLClass...,
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    classes: HTMLClass...,
-    builder: @escaping Builder
-  ) {
-    self.init(tag, id: nil, classList: Array(classes), builder: builder, containing: Self.emptyContents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
+    id: HTMLId? = nil,
     classes: HTMLClass...,
     builder: @escaping Builder
   ) {
@@ -241,55 +170,11 @@ struct HTML: Element {
 
   init(
     _ tag: HTMLTag,
-    class: HTMLClass,
-    builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
+    id: HTMLId? = nil,
+    classes: HTMLClass...,
+    @ElementBuilder containing contents: @escaping Contents
   ) {
-    self.init(tag, id: nil, classList: [`class`], builder: builder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    class: HTMLClass,
-    builder: @escaping Builder,
-    @ElementBuilder containing contents: @escaping () -> [Element]
-  ) {
-    self.init(tag, id: id, classList: [`class`], builder: builder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    class: HTMLClass,
-    builder: @escaping Builder
-  ) {
-    self.init(tag, id: nil, classList: [`class`], builder: builder, containing: Self.emptyContents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    class: HTMLClass,
-    builder: @escaping Builder
-  ) {
-    self.init(tag, id: id, classList: [`class`], builder: builder, containing: Self.emptyContents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    class: HTMLClass,
-    @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
-  ) {
-    self.init(tag, id: nil, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
-  }
-
-  init(
-    _ tag: HTMLTag,
-    id: HTMLId?,
-    class: HTMLClass,
-    @ElementBuilder containing contents: @escaping () -> [Element] = { [] }
-  ) {
-    self.init(tag, id: id, classList: [`class`], builder: Self.emptyBuilder, containing: contents)
+    self.init(tag, id: id, classList: Array(classes), builder: Self.emptyBuilder, containing: contents)
   }
 
   var body: Element {

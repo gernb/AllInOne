@@ -6,9 +6,9 @@ struct NavBar: Element {
   }
 
   let showBackground: Bool
-  let content: () -> [Element]
+  let content: HTML.Contents
 
-  init(showBackground: Bool = true, @ElementBuilder content: @escaping () -> [Element]) {
+  init(showBackground: Bool = true, @ElementBuilder content: @escaping HTML.Contents) {
     self.showBackground = showBackground
     self.content = content
   }
@@ -17,7 +17,7 @@ struct NavBar: Element {
     self.showBackground = showBackground
     self.content = {
       [
-        HTML(.div, class: .title) {
+        HTML(.div, classes: .title) {
           $1.innerText = .string(title)
         }
       ]
@@ -25,12 +25,12 @@ struct NavBar: Element {
   }
 
   var body: Element {
-    HTML(.div, class: .navbar) {
+    HTML(.div, classes: .navbar) {
       if showBackground {
-        HTML(.div, class: .navbarBg)
+        HTML(.div, classes: .navbarBg)
       }
-      HTML(.div, class: .navbarInner) {
-        HTML(.div, class: .left) {
+      HTML(.div, classes: .navbarInner) {
+        HTML(.div, classes: .left) {
           Link(id: backButton, classes: [.back]) {
             HTML(.i, classes: .icon, .iconBack)
             HTML(.span) {
@@ -39,7 +39,7 @@ struct NavBar: Element {
           }
         }
         content()
-        HTML(.div, id: toolbar, class: .right)
+        HTML(.div, id: toolbar, classes: .right)
       }
     }
   }
@@ -63,7 +63,7 @@ extension NavBar: EnvironmentKey {
     func showBackButton(_ show: Bool = true) {
       backButton.style.display = show ? "inline" : "none"
     }
-    func setToolbarItems(@ElementBuilder items: () -> [Element]) {
+    func setToolbarItems(@ElementBuilder items: HTML.Contents) {
       toolbar.clear()
       items().forEach(toolbar.add)
     }

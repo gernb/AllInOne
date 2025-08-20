@@ -1,12 +1,12 @@
 import JavaScriptKit
 
 struct Button: Element {
-  let label: () -> [Element]
+  let label: HTML.Contents
   let action: () -> Void
 
   init(
     action: @escaping () -> Void,
-    @ElementBuilder label: @escaping () -> [Element]
+    @ElementBuilder label: @escaping HTML.Contents
   ) {
     self.label = label
     self.action = action

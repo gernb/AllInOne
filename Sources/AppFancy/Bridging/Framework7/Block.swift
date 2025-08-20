@@ -2,18 +2,18 @@ import JavaScriptKit
 
 struct Block: Element {
   let styles: [Style]
-  let content: () -> [Element]
+  let content: HTML.Contents
 
-  init(styles: [Style], @ElementBuilder content: @escaping () -> [Element]) {
+  init(styles: [Style], @ElementBuilder content: @escaping HTML.Contents) {
     self.styles = styles
     self.content = content
   }
 
-  init(style: Style..., @ElementBuilder content: @escaping () -> [Element]) {
+  init(style: Style..., @ElementBuilder content: @escaping HTML.Contents) {
     self.init(styles: style, content: content)
   }
 
-  init(@ElementBuilder content: @escaping () -> [Element]) {
+  init(@ElementBuilder content: @escaping HTML.Contents) {
     self.init(styles: [], content: content)
   }
 
@@ -40,9 +40,9 @@ extension Block {
 }
 
 struct BlockFooter: Element {
-  @ElementBuilder var content: () -> [Element]
+  @ElementBuilder var content: HTML.Contents
   var body: Element {
-    HTML(.div, class: .blockFooter, containing: content)
+    HTML(.div, classes: .blockFooter, containing: content)
   }
 }
 
