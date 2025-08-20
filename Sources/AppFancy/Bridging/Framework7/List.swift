@@ -52,27 +52,39 @@ protocol ListItemElement: Element {}
 struct ListItem: ListItemElement {
   let id: HTMLId?
   let title: String
-  let subtitle: String?
+  let trailingAccessory: (() -> [Element])?
   let icon: Icon?
 
-  init(id: HTMLId? = nil, title: String, subtitle: String? = nil, icon: F7Icon? = nil) {
+  init(id: HTMLId? = nil, title: String, icon: F7Icon? = nil) {
     self.id = id
     self.title = title
-    self.subtitle = subtitle
+    self.trailingAccessory = nil
+    self.icon = icon.map { Icon($0) }
+  }
+
+  init(
+    id: HTMLId? = nil,
+    title: String,
+    icon: F7Icon? = nil,
+    @ElementBuilder trailingAccessory: @escaping () -> [Element]
+  ) {
+    self.id = id
+    self.title = title
+    self.trailingAccessory = trailingAccessory
     self.icon = icon.map { Icon($0) }
   }
 
   var body: Element {
     HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
       HTML(.div, classList: hasSwipeOut ? [.itemContent, .swipeoutContent] : [.itemContent]) {
-        Self.content(title: title, subtitle: subtitle, icon: icon)
+        Self.content(title: title, icon: icon, trailingAccessory: trailingAccessory)
       }
     }
   }
 
   private var hasSwipeOut: Bool { Environment[Swipeout.self].isEmpty == false }
 
-  fileprivate static func content(title: String, subtitle: String?, icon: Icon?) -> [Element] {
+  fileprivate static func content(title: String, icon: Icon?, trailingAccessory: (() -> [Element])?) -> [Element] {
     let media = icon.map { icon in
       HTML(.div, class: .itemMedia) {
         icon
@@ -80,8 +92,8 @@ struct ListItem: ListItemElement {
     }
     let inner = HTML(.div, class: .itemInner) {
       HTML(.div, class: .itemTitle) { $1.innerText = .string(title) }
-      if let subtitle {
-        HTML(.div, class: .itemAfter) { $1.innerText = .string(subtitle) }
+      if let trailingAccessory {
+        HTML(.div, class: .itemAfter, containing: trailingAccessory)
       }
     }
     let leadingSwipeout = Environment[Swipeout.self]
@@ -107,42 +119,35 @@ struct ListItem: ListItemElement {
 struct ActionListItem: ListItemElement {
   let id: HTMLId?
   let title: String
-  let subtitle: String?
   let icon: Icon?
+  let trailingAccessory: (() -> [Element])?
   let action: () -> Void
-  let isItemLink: Bool
 
   init(
     id: HTMLId? = nil,
     title: String,
-    subtitle: String? = nil,
     icon: F7Icon? = nil,
-    action: @escaping () -> Void
-  ) {
-    self.init(
-      id: id,
-      title: title,
-      subtitle: subtitle,
-      icon: icon,
-      isItemLink: false,
-      action: action
-    )
-  }
-
-  fileprivate init(
-    id: HTMLId? = nil,
-    title: String,
-    subtitle: String? = nil,
-    icon: F7Icon? = nil,
-    isItemLink: Bool,
     action: @escaping () -> Void
   ) {
     self.id = id
     self.title = title
-    self.subtitle = subtitle
     self.icon = icon.map { Icon($0) }
-    self.isItemLink = isItemLink
+    self.trailingAccessory = nil
     self.action = action
+  }
+
+  init(
+    id: HTMLId? = nil,
+    title: String,
+    icon: F7Icon? = nil,
+    action: @escaping () -> Void,
+    @ElementBuilder trailingAccessory: @escaping () -> [Element]
+  ) {
+    self.id = id
+    self.title = title
+    self.icon = icon.map { Icon($0) }
+    self.action = action
+    self.trailingAccessory = trailingAccessory
   }
 
   var body: Element {
@@ -192,7 +197,7 @@ struct ActionListItem: ListItemElement {
           }
         )
       } containing: {
-        ListItem.content(title: title, subtitle: subtitle, icon: icon)
+        ListItem.content(title: title, icon: icon, trailingAccessory: trailingAccessory)
       }
     }
   }
@@ -201,9 +206,6 @@ struct ActionListItem: ListItemElement {
     var list = [HTMLClass.itemContent]
     if hasSwipeOut {
       list.append(.swipeoutContent)
-    }
-    if isItemLink {
-      list.append(.itemLink)
     }
     if Environment[Popover.InsidePopover.self] {
       list.append(.popoverClose)
@@ -240,11 +242,11 @@ struct NavigationListItem: ListItemElement {
     return ActionListItem(
       id: id,
       title: title,
-      subtitle: subtitle,
-      icon: icon,
-      isItemLink: true
+      icon: icon
     ) {
       view?.navigate(to: destination())
+    } trailingAccessory: {
+      Icon(.chevronRight)
     }
   }
 }
@@ -258,14 +260,26 @@ struct Swipeout {
     let action: @MainActor () -> Void
 
     var body: Element {
-      Link(title, classes: classList, action: action)
+      Link(classes: linkClassList, action: action) {
+        HTML(.div, classList: labelClassList) {
+          $1.innerText = .string(title)
+        }
+      }
     }
 
-    private var classList: [HTMLClass] {
+    private var linkClassList: [HTMLClass] {
       if let color {
         [.swipeoutClose, color.class]
       } else {
         [.swipeoutClose]
+      }
+    }
+
+    private var labelClassList: [HTMLClass] {
+      if color == nil {
+        []
+      } else {
+        [.class("text-color-white")]
       }
     }
   }

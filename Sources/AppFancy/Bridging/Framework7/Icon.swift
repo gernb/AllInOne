@@ -36,6 +36,7 @@ extension HTMLClass {
 enum F7Icon: String {
   case arrowUpDoc = "arrow_up_doc"
   case arrowUpDocFill = "arrow_up_doc_fill"
+  case chevronRight = "chevron_right"
   case docPlaintext = "doc_plaintext"
   case docText = "doc_text"
   case docTextFill = "doc_text_fill"

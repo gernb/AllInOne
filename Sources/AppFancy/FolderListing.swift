@@ -18,7 +18,7 @@ struct FolderListing: Page {
     }
 
     HTML(.div) {
-      $1.style.margin = "10px"
+      $1.style.margin = "10px 0 10px 10px"
     } containing: {
       Breadcrumbs(
         [("/", .house)] + model.pathList.map { ($0, .folder) }
