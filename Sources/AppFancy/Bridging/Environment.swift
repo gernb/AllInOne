@@ -28,6 +28,11 @@ extension Page {
   }
 }
 
+@MainActor
+protocol EnvironmentWrapper {
+  func withEnvironment(_ perform: () -> Void)
+}
+
 extension EnvironmentKey {
   fileprivate static var key: String { String(describing: Self.self) }
 }
@@ -60,7 +65,7 @@ private struct ElementEnvironmentWrapper<T: Element, K: EnvironmentKey>: Element
   }
 }
 
-private struct PageEnvironmentWrapper<T: Page, K: EnvironmentKey>: Page {
+private struct PageEnvironmentWrapper<T: Page, K: EnvironmentKey>: EnvironmentWrapper, Page {
   private let wrapped: T
   private let value: K.Value
   private let key: K.Type
@@ -75,6 +80,16 @@ private struct PageEnvironmentWrapper<T: Page, K: EnvironmentKey>: Page {
     self.wrapped = wrapped
     self.key = key
     self.value = value
+  }
+
+  func withEnvironment(_ perform: () -> Void) {
+    if let subWrapped = wrapped as? EnvironmentWrapper {
+      Environment.$storage.withValue(localStorage) {
+        subWrapped.withEnvironment(perform)
+      }
+    } else {
+      Environment.$storage.withValue(localStorage, operation: perform)
+    }
   }
 
   // Page conformance

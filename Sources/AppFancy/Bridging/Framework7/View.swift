@@ -41,6 +41,7 @@ final class View {
       ].jsObject()
     ]
     View.main.node.router.routes = routes.jsValue
+    View.main.node.history.length = 0
 
     _ = App.dom7(App.doc).on(
       "page:beforein",
@@ -52,6 +53,19 @@ final class View {
         }
         let page = entry.page
         var tokens = entry.tokens
+
+        if let wrapped = page as? EnvironmentWrapper {
+          wrapped.withEnvironment {
+            guard let navbar = NavBar.current else { return }
+            let historyLen = f7page.view.history.length.number!
+            if historyLen <= 1 {
+              navbar.showBackButton(false)
+            } else {
+              navbar.showBackButton(true)
+            }
+          }
+        }
+
         tokens = [observe { page.observing() }]
         tokens.formUnion(page.observables())
         pages[name] = (page, tokens)

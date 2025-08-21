@@ -78,7 +78,6 @@ struct FolderListing: Page {
   }
 
   func willBeAdded() {
-    NavBar.current?.showBackButton(model.isRoot == false)
     NavBar.current?.setToolbarItems {
       Popover {
         Icon(.lineHorizontal3)
@@ -90,6 +89,7 @@ struct FolderListing: Page {
         .listStyle(.itemDividers)
       }
     }
+
     Task {
       try? await model.fetchCurrentDirectory()
     }
@@ -153,9 +153,6 @@ struct FolderListing: Page {
 @MainActor
 final class FolderListingModel {
   let path: String
-  var isRoot: Bool {
-    path == "/"
-  }
   var pathList: [String] {
     path.components(separatedBy: "/").filter { $0.isEmpty == false }
   }
