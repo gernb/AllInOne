@@ -238,7 +238,7 @@ struct NavigationListItem: ListItemElement {
   }
 
   var body: Element {
-    let view = Environment[View.self]
+    let view = View.current
     return ActionListItem(
       id: id,
       title: title,

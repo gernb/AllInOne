@@ -1,13 +1,20 @@
+import Foundation
 import JavaScriptKit
 import SwiftNavigation
 
 @MainActor
 final class View {
+  static var current: View? { Environment[View.self] }
   static let main = View(App.f7app.views.main)
 
   let node: JSValue
 
+  private static let views: [String: View] = [
+    View.main.node.name.string!: .main,
+  ]
   private static var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
+
+  private var pageRegistry: [String: Page] = [:]
   private var navbar: NavBar?
 
   private init(_ node: JSValue) {
@@ -15,6 +22,26 @@ final class View {
   }
 
   static func setup() {
+    let routes = [
+      [
+        "name": "swift",
+        "path": "/swift/:id",
+        "async": JSClosure { args in
+          let context = args[0]
+          let id = context.to.params.id.string!
+          let viewName = context.router.view.name.string!
+          let view = Self.views[viewName]!
+          let page = view.pageRegistry[id]!
+          let resolve = context.resolve.function!
+          _ = resolve([
+            "el": page.render(parentNode: View.main.node)
+          ])
+          return .undefined
+        }
+      ].jsObject()
+    ]
+    View.main.node.router.routes = routes.jsValue
+
     _ = App.dom7(App.doc).on(
       "page:beforein",
       JSClosure { args in
@@ -66,15 +93,15 @@ final class View {
         return .undefined
       }
     )
-    _ = App.dom7(App.doc).on(
-      "page:beforeremove",
-      JSClosure { args in
-        let f7page = args[1].object!
-        let name = f7page.name.string!
-        pages[name] = nil
-        return .undefined
-      }
-    )
+    // _ = App.dom7(App.doc).on(
+    //   "page:beforeremove",
+    //   JSClosure { args in
+    //     let f7page = args[1].object!
+    //     let name = f7page.name.string!
+    //     pages[name] = nil
+    //     return .undefined
+    //   }
+    // )
   }
 
   func insert(element: Element, before id: String) {
@@ -96,10 +123,12 @@ final class View {
       .environment(NavBar.self, navbar?.instance)
       .environment(View.self, self)
     Self.pages[page.name] = (page, [])
+    let id = UUID().uuidString
+    pageRegistry[id] = page
     _ = node.router.navigate(
       [
-        "url": "/swift/\(page.name)",
-        "route": ["el": page.render(parentNode: node.el)],
+        "name": "swift",
+        "params": [ "id": id ],
       ].jsObject(),
       options
     )
