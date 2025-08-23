@@ -1,18 +1,30 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import AppShared
 @preconcurrency import JavaScriptKit
 
+/// A View that renders the app main UI.
+/// This implementation simply replaces the list content when navigating in/out of a folder.
 struct MainView: View {
+  /// The view model
   private let model = MainViewModel()
+  /// The UI label that displays the current path
   private let pathLabel = DOM.create("h2") {
     $0.style = "flex-grow: 1;"
   }
+  /// The UI label that displays the time stamp of the last update from the server
   private let timestampLabel = DOM.create("span")
+  /// UI button to navigate "up" one level
   private let backButton = DOM.create("img") {
     $0.src = .string(DOM.locationPath + "/back.png")
     $0.height = 40
     $0.style = "display: none;"
   }
+  /// UI element for the folder contents
   private let list = DOM.create("div")
+  /// UI element for the "new folder" dialog
   private let dialog = DOM.create("dialog") { createFolderDialog($0) }
 
   private enum Constants {
@@ -119,9 +131,11 @@ struct MainView: View {
   }
 
   func onAdded() {
+    // Get the folder contents for the current path
     model.fetchCurrentDirectory()
   }
 
+  /// Creates a browser dialog for getting the new folder name from the user.
   private static func createFolderDialog(_ dialog: JSValue) {
     let input = DOM.create("input") {
       $0.type = "text"

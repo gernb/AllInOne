@@ -1,6 +1,14 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// Wrapper that bridges the Framework7 Pull to Refresh control to Swift.
+/// https://framework7.io/docs/pull-to-refresh
 struct PullToRefresh: Element {
+  /// The callback to invoke when the pull-to-refresh control is actioned (pulled).
+  /// When the action returns the spinner will be dismissed.
   let action: () async -> Void
 
   var body: Element {

@@ -1,5 +1,11 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// A object that can be converted into a `JSObject`.
+/// This is particularly useful for declaring JSObjects as Swift dictionaries.
 public protocol ConvertibleToJSObject {
   func jsObject() -> JSObject
 }

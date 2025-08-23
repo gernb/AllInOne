@@ -1,11 +1,23 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// Wrapper that bridges the Framework7 Link control to Swift.
+/// https://framework7.io/docs/link
 struct Link: Element {
   let id: HTMLId?
   let classes: [HTMLClass]
   let content: HTML.Contents
   let action: (() -> Void)?
 
+  /// Creates a new `Link` with the provided text label.
+  /// - Parameters:
+  ///   - label: The text label for this instance.
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - classes: (optional) HTML classes to add to this instance.
+  ///   - action: Callback that is invoked when the user actions (taps/clicks) on this control.
   init(
     _ label: String,
     id: HTMLId? = nil,
@@ -19,6 +31,11 @@ struct Link: Element {
     }
   }
 
+  /// Creates a new `Link` with custom content.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - action: Callback that is invoked when the user actions (taps/clicks) on this control.
+  ///   - content: The custom content for the label of this control.
   init(
     id: HTMLId? = nil,
     action: @escaping () -> Void,
@@ -27,6 +44,12 @@ struct Link: Element {
     self.init(id: id, classes: [], action: action, content: content)
   }
 
+  /// Creates a new `Link` with custom content and additional HTML classes added to the link node.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - classes: Array of additional HTML classes to add to the link node.
+  ///   - action: Callback that is invoked when the user actions (taps/clicks) on this control.
+  ///   - content: The custom content for the label of this control.
   init(
     id: HTMLId? = nil,
     classes: [HTMLClass],

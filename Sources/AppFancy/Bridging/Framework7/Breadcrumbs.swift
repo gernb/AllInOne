@@ -1,12 +1,22 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// Wrapper that bridges the Framework7 Breadcrumbs widget to Swift.
+/// https://framework7.io/docs/breadcrumbs
 struct Breadcrumbs: Element {
   let items: [Element]
 
+  /// Creates a new `Breadcrumbs` widget with the array of items as the content.
+  /// - Parameter items: The custom elements for this instance.
   init(_ items: [Element]) {
     self.items = items
   }
 
+  /// Creates a new `Breadcrumbs` widget with the array of strings as the content.
+  /// - Parameter items: The text items for this instance.
   init(_ items: [String]) {
     self.init(
       items.map { text in
@@ -15,6 +25,8 @@ struct Breadcrumbs: Element {
     )
   }
 
+  /// Creates a new `Breadcrumbs` widget with the array of string/icon pairs as the content.
+  /// - Parameter items: The pairs of text and optional icons for this instance.
   init(_ items: [(label: String, icon: F7Icon?)]) {
     self.init(
       items.map { (text, icon) in

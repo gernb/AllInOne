@@ -1,11 +1,20 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import Foundation
 import Logging
 import ServiceLifecycle
 
+/// A service that uses the `browser-sync` application (if it is installed) to
+/// proxy web traffic and hot-reload the content when it receives a reload signal.
 struct BrowserSyncService: Service {
+  /// The local port the web server is listening on.
   let port: Int
+  /// The logging instance to use.
   let logger: Logger
 
+  /// The entrypoint for this service.
   func run() async throws {
     let task = Task {
       while Task.isCancelled == false {

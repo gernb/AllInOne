@@ -1,11 +1,21 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
 // MARK: List
 
+/// Wrapper that bridges the Framework7 List widget to Swift.
+/// https://framework7.io/docs/list-view
 struct List: Element {
   let id: HTMLId?
   let content: HTML.Contents
 
+  /// Creates a new `List` instance.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - content: (optional) Initial content for this instance.
   init(id: HTMLId? = nil, @ElementBuilder content: @escaping HTML.Contents = { [] }) {
     self.id = id
     self.content = content
@@ -27,6 +37,7 @@ struct List: Element {
 }
 
 extension List {
+  /// List styles that can be used to modify the display of a List.
   enum Style: EnvironmentKey {
     case itemDividers, outline
     static let defaultValue: Style? = nil
@@ -40,6 +51,9 @@ extension List {
 }
 
 extension Element {
+  /// Changes the style used to visually display lists inside the enclosing `Element`.
+  /// - Parameter style: The new list style to use.
+  /// - Returns: The modified `Element`.
   func listStyle(_ style: List.Style?) -> Element {
     self.environment(List.Style.self, style)
   }
@@ -47,14 +61,21 @@ extension Element {
 
 // MARK: List Elements
 
+/// Tags a type as being an item that can be displayed in a list.
 protocol ListItemElement: Element {}
 
+/// A list item that can display a title, icon, and trailing accessory view.
 struct ListItem: ListItemElement {
   let id: HTMLId?
   let title: String
   let trailingAccessory: HTML.Contents?
   let icon: Icon?
 
+  /// Creates a new `ListItem` instance.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - title: The text for the "title" slot in the UI.
+  ///   - icon: An optional icon to display next to the title.
   init(id: HTMLId? = nil, title: String, icon: F7Icon? = nil) {
     self.id = id
     self.title = title
@@ -62,6 +83,12 @@ struct ListItem: ListItemElement {
     self.icon = icon.map { Icon($0) }
   }
 
+  /// Creates a new `ListItem` instance with a trailing accessory view.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - title: The text for the "title" slot in the UI.
+  ///   - icon: An optional icon to display next to the title.
+  ///   - trailingAccessory: The custom UI to display in the trailing accessory "slot".
   init(
     id: HTMLId? = nil,
     title: String,
@@ -116,6 +143,8 @@ struct ListItem: ListItemElement {
   }
 }
 
+/// An actionable list item that can display a title, icon, and trailing accessory view.
+/// This list item supports the user tapping/clicking it.
 struct ActionListItem: ListItemElement {
   let id: HTMLId?
   let title: String
@@ -123,6 +152,12 @@ struct ActionListItem: ListItemElement {
   let trailingAccessory: HTML.Contents?
   let action: () -> Void
 
+  /// Creates a new `ActionListItem` instance.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - title: The text for the "title" slot in the UI.
+  ///   - icon: An optional icon to display next to the title.
+  ///   - action: Callback that is invoked when the user taps/clicks on the item.
   init(
     id: HTMLId? = nil,
     title: String,
@@ -136,6 +171,13 @@ struct ActionListItem: ListItemElement {
     self.action = action
   }
 
+  /// Creates a new `ActionListItem` instance with a trailing accessory view.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - title: The text for the "title" slot in the UI.
+  ///   - icon: An optional icon to display next to the title.
+  ///   - action: Callback that is invoked when the user taps/clicks on the item.
+  ///   - trailingAccessory: The custom UI to display in the trailing accessory "slot".
   init(
     id: HTMLId? = nil,
     title: String,
@@ -155,6 +197,7 @@ struct ActionListItem: ListItemElement {
     var delay: Task<Void, Never>?
     var swipeIsOpen = false
     return HTML(.li, id: id, classList: hasSwipeOut ? [.swipeout] : []) {
+      // Framework7 seems to invoke the item tap action when the user swipes or taps on the swipe action button.
       _ = $1.addEventListener(
         "swipeout",
         JSClosure { _ in
@@ -216,23 +259,28 @@ struct ActionListItem: ListItemElement {
   private var hasSwipeOut: Bool { Environment[Swipeout.self].isEmpty == false }
 }
 
+/// A list item that can display a title, icon, and trailing accessory view.
+/// This list item supports the user tapping/clicking it and performs a navigate to the destination when tapped.
 struct NavigationListItem: ListItemElement {
   let id: HTMLId?
   let title: String
-  let subtitle: String?
   let icon: F7Icon?
   let destination: () -> Page
 
+  /// Creates a new `NavigationListItem` instance.
+  /// - Parameters:
+  ///   - id: (optional) The unique ID for this instance.
+  ///   - title: The text for the "title" slot in the UI.
+  ///   - icon: An optional icon to display next to the title.
+  ///   - destination: The `Page` to navigate to when tapped.
   init(
     id: HTMLId? = nil,
     title: String,
-    subtitle: String? = nil,
     icon: F7Icon? = nil,
     destination: @escaping @autoclosure () -> Page
   ) {
     self.id = id
     self.title = title
-    self.subtitle = subtitle
     self.icon = icon
     self.destination = destination
   }
@@ -253,10 +301,16 @@ struct NavigationListItem: ListItemElement {
 
 // MARK: Swipeout
 
+/// Wrapper that bridges the Framework7 Swipeout control to Swift.
+/// https://framework7.io/docs/swipeout
 struct Swipeout {
+  /// A single swipeout action item in a swipeout group.
   struct Action: Element, Sendable {
+    /// The text label for this item.
     let title: String
+    /// An optional colour for this item.
     var color: ThemeColor?
+    /// The callback to invoke when this item is tapped/clicked.
     let action: @MainActor () -> Void
 
     var body: Element {
@@ -284,7 +338,9 @@ struct Swipeout {
     }
   }
 
+  /// A group of swipeout actions that are displayed together.
   struct Group: Sendable {
+    /// The list item edge where this group is displayed.
     enum Edge {
       case leading, trailing
     }
@@ -298,6 +354,7 @@ extension Swipeout: EnvironmentKey {
   static let defaultValue: [Group] = []
 }
 
+/// Provides a DSL for simplifying the declaration of `Swipeout` instances.
 @resultBuilder
 struct SwipeoutBuilder {
   static func buildBlock(_ components: Swipeout.Action...) -> [Swipeout.Group] {
@@ -309,6 +366,9 @@ struct SwipeoutBuilder {
 }
 
 extension ListItemElement {
+  /// Adds a group of "swipeout" actions to a list item.
+  /// - Parameter actions: The action group to add.
+  /// - Returns: The modified list item.
   func swipeActions(@SwipeoutBuilder actions: () -> [Swipeout.Group]) -> Element {
     self.environment(Swipeout.self, actions())
   }

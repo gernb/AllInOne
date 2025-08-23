@@ -1,16 +1,24 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import Foundation
 import HTTPTypes
 import Hummingbird
 import MD5
 import Shared
 
+/// A file server middleware API that provides a REST interface for basic file CRUD operations.
 struct FileController: Sendable {
+  /// The root URL for all file operations
   let baseUrl: URL
 
   private let fileManager = FileManager.default
   private let fileIO = FileIO()
   private let encoder = JSONEncoder()
 
+  /// Creates a new file controller instance.
+  /// - Parameter dataPath: The root path (relative to the current working directory) for all file operations.
   init(dataPath: String) throws {
     let cwd = fileManager.currentDirectoryPath
     self.baseUrl = URL(filePath: cwd).appending(path: dataPath)
@@ -24,6 +32,8 @@ struct FileController: Sendable {
     }
   }
 
+  /// Creates REST endpoints in the provided router group.
+  /// - Parameter group: The router group to use as the base for the REST endpoints.
   func addRoutes(to group: RouterGroup<some RequestContext>) {
     group.get("/", use: self.download)
     group.get("**", use: self.download)
@@ -107,7 +117,11 @@ struct FileController: Sendable {
   }
 }
 
+/// Helper routines
 extension FileController {
+  /// Creates a response for the listing (contents) of a URL.
+  /// - Parameter url: The full URL to get the listing of.
+  /// - Returns: A new `FolderListingResponse`.
   private func folderListing(for url: URL) throws -> FolderListingResponse {
     var files: [String] = []
     var folders: [String] = []
@@ -122,6 +136,9 @@ extension FileController {
     return FolderListingResponse(status: 0, files: files, directories: folders)
   }
 
+  /// Gets the requested path from the input context.
+  /// - Parameter context: The request input context.
+  /// - Returns: The (relative) path from the request context.
   private func path(from context: some RequestContext) throws -> String {
       try "/" + context.parameters.getCatchAll()
         .map {
@@ -133,6 +150,9 @@ extension FileController {
         .joined(separator: "/")
   }
 
+  /// Adds standard response headers for the given path URL.
+  /// - Parameter url: The URL to use to generate the standard headers.
+  /// - Returns: The standard reponse headers.
   private func headers(for url: URL) throws -> HTTPFields {
     return [
       .contentDisposition: "attachment;filename=\"\(url.lastPathComponent)\"",
@@ -140,6 +160,9 @@ extension FileController {
     ]
   }
 
+  /// Generates the ETag for the given URL.
+  /// - Parameter url: The URL to use to calculate the ETag.
+  /// - Returns: The URL-specific ETag.
   private func etag(for url: URL) throws -> String {
     let attrs = try? fileManager.attributesOfItem(atPath: url.path(percentEncoded: false))
     let modDate = (attrs?[.modificationDate] as? Date) ?? .now
@@ -152,6 +175,8 @@ extension FileController {
 extension UploadResponse: ResponseEncodable {}
 
 extension URL {
+  /// Determines whether or not the URL is for a directory.
+  /// - Returns: `true` if the URL is for a directory, `false` otherwise.
   func isDirectory() throws -> Bool {
     (try resourceValues(forKeys: [.isDirectoryKey])).isDirectory ?? false
   }

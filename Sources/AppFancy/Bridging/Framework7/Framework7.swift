@@ -1,6 +1,15 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
 extension Element {
+  /// Modifies the containing frame to control the maximum width and height.
+  /// - Parameters:
+  ///   - maxWidth: (optional) The maximum width in pixels.
+  ///   - maxHeight: (optional) The maximum height in pixels.
+  /// - Returns: 
   func frame(maxWidth: Int? = nil, maxHeight: Int? = nil) -> Element {
     guard maxWidth != nil || maxHeight != nil else { return self }
     return HTML(.div) {
@@ -18,6 +27,8 @@ extension Element {
 
 // MARK: Colours
 
+/// Wrapper that bridges the Framework7 theme colours to Swift.
+/// https://framework7.io/docs/color-themes
 enum ThemeColor {
   case primary, white, black
   case red, green, blue

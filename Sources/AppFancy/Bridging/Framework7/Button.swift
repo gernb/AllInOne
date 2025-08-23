@@ -1,9 +1,19 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// Wrapper that bridges the Framework7 Button control to Swift.
+/// https://framework7.io/docs/button
 struct Button: Element {
   let label: HTML.Contents
   let action: () -> Void
 
+  /// Creates a new `Button` with a custom action and UI label.
+  /// - Parameters:
+  ///   - action: The callback to be invoked when the user actions on (taps/clicks) the button.
+  ///   - label: The custom UI to show for this button.
   init(
     action: @escaping () -> Void,
     @ElementBuilder label: @escaping HTML.Contents
@@ -12,6 +22,10 @@ struct Button: Element {
     self.action = action
   }
 
+  /// Creates a new `Button` with a custom action and a text label.
+  /// - Parameters:
+  ///   - label: The text string to show for this button.
+  ///   - action: The callback to be invoked when the user actions on (taps/clicks) the button.
   init(
     _ label: String,
     action: @escaping () -> Void
@@ -48,15 +62,19 @@ struct Button: Element {
 }
 
 extension Button {
+  /// Button shapes that can be used to style a button.
   enum Shape {
     case rect, round
   }
+  /// Button fills that cen be used to style a button.
   enum Fill {
     case none, tonal, solid, outline
   }
+  /// Button sizes that can be used to style a button.
   enum Size {
     case small, normal, large
   }
+  /// Buttons can be "raised" or not.
   enum Raised {}
 }
 
@@ -109,6 +127,13 @@ extension HTMLClass {
 }
 
 extension Element {
+  /// Changes the style used to visually display buttons inside the enclosing `Element`.
+  /// - Parameters:
+  ///   - fill: Modifies the button fill.
+  ///   - raised: Modifies whether the button is raised or not.
+  ///   - shape: Modifies the button shape.
+  ///   - size: Modifies the button size.
+  /// - Returns: The modified `Element`.
   func buttonStyle(
     fill: Button.Fill? = nil,
     raised: Bool? = nil,

@@ -1,12 +1,27 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import AppShared
 import JavaScriptKit
 
+/// A View that renders a single list item (file or folder) and handles events on that item.
 struct ListItem: View {
+  /// The text label; file or folder name
   private let label: String
+  /// The image icon
   private let image: String
+  /// Callback when the item is tapped / clicked.
   private let itemTapped: () -> Void
+  /// Callback when the item's "trash" button is tapped / clicked.
   private let trashTapped: () -> Void
 
+  /// Creates a new list item
+  /// - Parameters:
+  ///   - label: The item's text label (file or folder name).
+  ///   - isFolder: Whether the item represents a folder; default is `false`.
+  ///   - itemTapped: Callback when the item is tapped / clicked; default is no-op.
+  ///   - trashTapped: Callback when the item's "trash" button is tapped / clicked; default is no-op.
   init(
     _ label: String,
     isFolder: Bool = false,

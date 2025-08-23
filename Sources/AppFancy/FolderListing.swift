@@ -1,12 +1,23 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import AppShared
 import Foundation
 import JavaScriptKit
 import SwiftNavigation
 
+/// The primary application UI.
+/// Each instance of this type represents a single folder;
+/// new instances are created and pushed on and popped off the nav stack.
 struct FolderListing: Page {
+  /// A unique name for this page
   let name: String
+  /// The observable view model
   private let model: FolderListingModel
 
+  /// Creates a new instance referencing a specific folder path.
+  /// - Parameter path: The path for this instance; default is the root folder.
   init(path: String = "/") {
     self.name = "FolderListing:\(path)"
     self.model = FolderListingModel(path: path)
@@ -32,6 +43,7 @@ struct FolderListing: Page {
     }
   }
 
+  // These allow the instance in the DOM to be found and referenced by the observation code.
   private let list = IdentifiedNode()
   private let timestampLabel = IdentifiedNode()
 
@@ -78,6 +90,7 @@ struct FolderListing: Page {
   }
 
   func willBeAdded() {
+    // Each instance has the same UI, but uniquely references this instance's model.
     NavBar.current?.setToolbarItems {
       Popover {
         Icon(.lineHorizontal3)
@@ -90,6 +103,7 @@ struct FolderListing: Page {
       }
     }
 
+    // Load this instance's directory listing.
     Task {
       try? await model.fetchCurrentDirectory()
     }
@@ -149,23 +163,31 @@ struct FolderListing: Page {
   }
 }
 
+/// An observable view model for this page.
 @Perceptible
 @MainActor
 final class FolderListingModel {
+  /// The full path for this folder.
   let path: String
+  /// Each folder component (including the root folder) in this path.
   var pathList: [String] {
     path.components(separatedBy: "/").filter { $0.isEmpty == false }
   }
+  /// The timestamp of the last successful folder listing update.
   private(set) var lastFetchTimestamp: Date?
+  /// The subfolders in this directory.
   private(set) var folders: [String] = []
+  /// The files in this directory.
   private(set) var files: [String] = []
 
+  /// The client API instance to use.
   private let clientApi = ClientAPI.live
 
   init(path: String) {
     self.path = path
   }
 
+  /// Updates the directory contents by fetching the listing from the server.
   func fetchCurrentDirectory() async throws {
     let response = try await clientApi.folderListing(path)
     folders = response.directories
@@ -173,6 +195,7 @@ final class FolderListingModel {
     lastFetchTimestamp = .now.addingTimeInterval(Global.tzOffset * 60)
   }
 
+  /// The full path of an item (file or folder) in this directory.
   func path(for item: String) -> String {
     if path.hasSuffix("/") {
       path + item
@@ -181,11 +204,13 @@ final class FolderListingModel {
     }
   }
 
+  /// Deletes an item from this directory and refreshes the listing.
   func delete(_ item: String) async throws {
     try await clientApi.delete(path: path(for: item))
     try await fetchCurrentDirectory()
   }
 
+  /// Downloads a file from this directory.
   func download(file: String) async throws {
     guard let response = try await clientApi.fetch(path: path(for: file))?.response,
       let obj = response.blob().object,
@@ -194,6 +219,7 @@ final class FolderListingModel {
       struct DownloadFailure: Swift.Error {}
       throw DownloadFailure()
     }
+    // Render a link and "click" it to cause the browser to present a file save dialog.
     let link = HTML(.a) {
       $1.href = Global.createObjectURL(blob)
       $1.download = .string(file)
@@ -203,11 +229,13 @@ final class FolderListingModel {
     _ = link.click()
   }
 
+  /// Creates a new subfolder in this directory and refreshes the listing.
   func createFolder(_ name: String) async throws {
     try await clientApi.createFolder(at: path(for: name))
     try await fetchCurrentDirectory()
   }
 
+  /// Uploads a file (selected by the user from a standard browser picker) to the directory and refreshes the listing.
   func upload(_ files: JSValue) async throws {
     struct UnknownError: Swift.Error {}
     guard files.length == 1, let file = files[0].object, let name = file.name.string else {

@@ -1,14 +1,27 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import JavaScriptKit
 
+/// Wrapper that bridges the Framework7 Icon widget to Swift.
+/// https://framework7.io/docs/icons
 struct Icon: Element {
   let iOSIcon: String
   let mdIcon: String
 
+  /// Creates a new `Icon` with the specified iOS and MD icon names.
+  /// - Parameters:
+  ///   - iOSIcon: The icon name to use for iOS.
+  ///   - mdIcon: The icon name to use for Material Design; default is to use the iOS name if not provided.
   init(iOSIcon: String, mdIcon: String? = nil) {
     self.iOSIcon = iOSIcon
     self.mdIcon = mdIcon ?? iOSIcon
   }
 
+  /// Creates a new `Icon` with the specified Framework7 icon.
+  /// https://framework7.io/icons/
+  /// - Parameter icon: The F7 icon to use; these auto-adapt for the appropriate iOS or MD version.
   init(_ icon: F7Icon) {
     self.init(iOSIcon: icon.rawValue, mdIcon: icon.mdIcon)
   }
@@ -33,6 +46,7 @@ extension HTMLClass {
   static let mdOnly: Self = "md-only"
 }
 
+/// https://framework7.io/icons/
 enum F7Icon: String {
   case arrowUpDoc = "arrow_up_doc"
   case arrowUpDocFill = "arrow_up_doc_fill"

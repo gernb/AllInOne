@@ -1,9 +1,17 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import Foundation
 import Hummingbird
 import Logging
 
+/// Application request context
 typealias AppRequestContext = BasicRequestContext
 
+/// Creates a new server application.
+/// - Parameter arguments: Command-line arguments used to customise the configuration.
+/// - Returns: A new server app that can be run.
 func buildApplication(_ arguments: some AppArguments) async throws -> some ApplicationProtocol {
   let environment = Environment()
   let logger = {
@@ -30,7 +38,13 @@ func buildApplication(_ arguments: some AppArguments) async throws -> some Appli
   return app
 }
 
-func buildRouter(logger: Logger, dataPath: String) throws -> Router<AppRequestContext> {
+/// Builds a server router that serves static files from CWD + `/public`, reads and writes files
+/// for the server API from CWD + `dataPath`, and logs all server requests.
+/// - Parameters:
+///   - logger: The logger instance to use.
+///   - dataPath: The root path for the file server, relative to the current working directory.
+/// - Returns: A configured server router.
+private func buildRouter(logger: Logger, dataPath: String) throws -> Router<AppRequestContext> {
   let router = Router(context: AppRequestContext.self)
   let path = FileManager.default.currentDirectoryPath + "/public"
   router.addMiddleware {
@@ -40,9 +54,6 @@ func buildRouter(logger: Logger, dataPath: String) throws -> Router<AppRequestCo
       searchForIndexHtml: true,
       logger: logger
     )
-  }
-  router.get("/hello") { _, _ in
-    return "Hello!"
   }
   try FileController(dataPath: dataPath).addRoutes(to: router.group("api/v1/files"))
   return router

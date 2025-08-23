@@ -1,27 +1,44 @@
+//
+// Copyright © 2025 peter bohac. All rights reserved.
+//
+
 import Foundation
 import JavaScriptKit
 import SwiftNavigation
 
+/// Wrapper that bridges the Framework7 View / Router widget to Swift.
+/// Also implements the observation enhancements for the `Page` control.
+/// https://framework7.io/docs/view
 @MainActor
 final class View {
+  /// Gets the current View associated with the current element. May be `nil` if the element hasn't beed added to a view.
   static var current: View? { Environment[View.self] }
+
+  /// The Framework7 "main" view that every app should have.
   static let main = View(App.f7app.views.main)
 
+  /// The JavaScript node associated with this instance.
   let node: JSValue
 
+  /// Tracks views by their name; allows for easy lookup of the instance by name.
   private static let views: [String: View] = [
     View.main.node.name.string!: .main,
   ]
+  /// Tracks the page instance and observation tokens by the page name.
   private static var pages: [String: (page: Page, tokens: Set<ObserveToken>)] = [:]
 
+  /// Tracks `Page` instances in the view by a unique ID. Used to map a route to the corresponding instance.
   private var pageRegistry: [String: Page] = [:]
+  /// Tracks the optional NavBar instance installed in this view.
   private var navbar: NavBar?
 
   private init(_ node: JSValue) {
     self.node = node
   }
 
+  /// Must be called as early as possible in order to ensure routing and page observation works correctly.
   static func setup() {
+    // Define an async route that maps a unique ID to a `Page` instance.
     let routes = [
       [
         "name": "swift",
@@ -41,8 +58,11 @@ final class View {
       ].jsObject()
     ]
     View.main.node.router.routes = routes.jsValue
+    // Clear any existing history (like a loading screen)
     View.main.node.history.length = 0
 
+    // Setup an event listener to start observing a page right before it is added to the view.
+    // Also controls whether the navbar back button should be visible.
     _ = App.dom7(App.doc).on(
       "page:beforein",
       JSClosure { args in
@@ -73,6 +93,7 @@ final class View {
         return .undefined
       }
     )
+    // Setup an event listener to invoke page life-cycle method after a page is added.
     _ = App.dom7(App.doc).on(
       "page:afterin",
       JSClosure { args in
@@ -82,6 +103,7 @@ final class View {
         return .undefined
       }
     )
+    // Setup an event listener to invoke page life-cycle method before page is removed.
     _ = App.dom7(App.doc).on(
       "page:beforeout",
       JSClosure { args in
@@ -91,6 +113,8 @@ final class View {
         return .undefined
       }
     )
+    // Setup an event listener to invoke page life-cycle method after page is removed.
+    // Also stops observing the page for changes.
     _ = App.dom7(App.doc).on(
       "page:afterout",
       JSClosure { args in
@@ -107,6 +131,7 @@ final class View {
         return .undefined
       }
     )
+    // The goal here was to keep the tracking dictionaries cleaned up, but this interferes with deep nav stacks...
     // _ = App.dom7(App.doc).on(
     //   "page:beforeremove",
     //   JSClosure { args in
@@ -118,6 +143,11 @@ final class View {
     // )
   }
 
+  /// Add an element to the view before a sibling element.
+  /// This is necessary for adding a common nav bar.
+  /// - Parameters:
+  ///   - element: The element to add.
+  ///   - id: The unique ID of the sibling element to add this before.
   func insert(element: Element, before id: String) {
     let sibling = App.doc.getElementById(id)
     _ = node.el.insertBefore(element.render(parentNode: node.el), sibling)
@@ -126,6 +156,10 @@ final class View {
     }
   }
 
+  /// Push a new `Page` on to the nav stack and transition to it.
+  /// - Parameters:
+  ///   - destination: The `Page` to navigate to.
+  ///   - transition: (optional) The transition to use; defaults to the platform (iOS or MD) appropriate transition for a forward navigation.
   func navigate(to destination: Page, transition: Transition? = nil) {
     let options: JSObject
     if let transition {
@@ -154,6 +188,7 @@ extension View: EnvironmentKey {
 }
 
 extension View {
+  /// Navigation transitions supported by Framework7.
   enum Transition: String {
     case circle = "f7-circle"
     case cover = "f7-cover"
