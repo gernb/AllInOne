@@ -31,6 +31,8 @@ final class View {
   private var pageRegistry: [String: Page] = [:]
   /// Tracks the optional NavBar instance installed in this view.
   private var navbar: NavBar?
+  /// Tracks the optional Toolbar instance installed in this view.
+  private var toolbar: Toolbar?
 
   private init(_ node: JSValue) {
     self.node = node
@@ -144,7 +146,7 @@ final class View {
   }
 
   /// Add an element to the view before a sibling element.
-  /// This is necessary for adding a common nav bar.
+  /// This is necessary for adding a common nav bar and/or toolbar.
   /// - Parameters:
   ///   - element: The element to add.
   ///   - id: The unique ID of the sibling element to add this before.
@@ -153,6 +155,9 @@ final class View {
     _ = node.el.insertBefore(element.render(parentNode: node.el), sibling)
     if let navbar = element as? NavBar {
       self.navbar = navbar
+    }
+    if let toolbar = element as? Toolbar {
+      self.toolbar = toolbar
     }
   }
 
@@ -169,6 +174,7 @@ final class View {
     }
     let page = destination
       .environment(NavBar.self, navbar?.instance)
+      .environment(Toolbar.self, toolbar?.instance)
       .environment(View.self, self)
     Self.pages[page.name] = (page, [])
     let id = UUID().uuidString
