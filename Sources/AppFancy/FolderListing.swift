@@ -98,6 +98,15 @@ struct FolderListing: Page {
         List {
           ActionListItem(title: "New Folder", icon: .folderBadgePlus, action: createFolder)
           ActionListItem(title: "Upload File", icon: .arrowUpDoc, action: uploadFile)
+          if let debugModel = AppMain.debugConsoleModel {
+            ActionListItem(title: "Show debug console", icon: .listBelowRectangle) {
+              guard App.currentSheet == nil else { return }
+              App.showSheet(
+                DebugConsoleSheet(model: debugModel),
+                detents: [0.33, 0.67]
+              )
+            }
+          }
         }
         .listStyle(.itemDividers)
       }

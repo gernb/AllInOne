@@ -4,6 +4,7 @@ CONTAINERSDK = swift-6.1.2-RELEASE_static-linux-0.0.1
 REPOSITORY = registry:5000
 TAG = app-server
 DEVPORT = 9100
+VERSION = $$(cat VERSION)
 
 container: CONFIG = release
 CONFIGURATION = $(CONFIG)
@@ -17,8 +18,10 @@ apps: appbasic appfancy
 appbasic:
 	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app-basic -c ${CONFIGURATION} --output public/app-basic
 
-appfancy:
+appfancy: create_version
 	swift package --swift-sdk ${APPSDK} --allow-writing-to-package-directory js --use-cdn --product app-fancy -c ${CONFIGURATION} --output public/app-fancy
+	@echo "App version: $(VERSION)"
+	$(MAKE) inc_version
 
 sync:
 	browser-sync reload
@@ -48,3 +51,9 @@ clean:
 	rm -rf public/app-basic
 	rm -rf public/app-fancy
 
+create_version:
+	mkdir -p Sources/AppFancy/Generated
+	@echo "let AppVersion = \"$(VERSION)\"" > Sources/AppFancy/Generated/AppVersion.swift
+
+inc_version:
+	@echo $$(echo $(VERSION) | awk -F . '{ OFS="."; $$3+=1; print }') > VERSION
