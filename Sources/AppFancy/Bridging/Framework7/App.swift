@@ -3,6 +3,7 @@
 //
 
 import JavaScriptKit
+import SwiftNavigation
 
 /// A bridging wrapper that encapsulates the Framework7 app instance.
 /// https://framework7.io/docs/app
@@ -14,6 +15,9 @@ struct App {
   static let f7app = JSObject.global.app
   /// The Framework7 JavaScript "dom" function.
   static let dom7 = JSObject.global.Dom7.function!
+
+  /// Keeps track of whether a sheet is currently being displayed.
+  static private(set) var currentSheet: (sheet: Element, f7sheet: JSValue)?
 
   /// This method should be called as early as possible in order to setup the necessary
   /// bridging code the rest of this library uses.
@@ -124,7 +128,7 @@ struct App {
   /// - Parameters:
   ///   - text: The text content of the toast.
   ///   - closeAfter: (optional) Auto-dismisses the toast after the specified timeout; default is no auto-dismiss.
-  /// - Returns: 
+  /// - Returns: The F7 toast instance.
   @discardableResult
   static func showToast(text: String, closeAfter: Duration? = nil) -> JSValue {
     let params = JSObject()
@@ -134,5 +138,58 @@ struct App {
       params.closeTimeout = .number(closeTimeout)
     }
     return f7app.toast.show(params)
+  }
+
+  /// Shows a modal sheet using the Framework7 Sheet widget.
+  /// - Parameters:
+  ///   - sheet: The `Sheet` to show.
+  ///   - swipeToClose: Whether or not to enable swipe to close; default is enabled.
+  ///   - detents: (optional) Array of detents/breakpoints the sheet can be swiped to.
+  /// - Returns: The F7 sheet instance.
+  @discardableResult
+  static func showSheet(
+    _ sheet: Sheet,
+    swipeToClose: Bool = true,
+    detents: [Double]? = nil
+  ) -> JSValue {
+    var tokens = Set<ObserveToken>()
+    let sheet = sheet
+      .environment(View.self, Environment[View.self]) as! ObservableElement
+    let node = sheet.render(parentNode: .undefined)
+    let params = [
+      "el": node,
+      "swipeToClose": swipeToClose,
+      "on": [
+        "open": JSClosure { _ in
+          tokens = [observe { sheet.observing() }]
+          tokens.formUnion(sheet.observables())
+          sheet.willBeAdded()
+          return .undefined
+        },
+        "opened": JSClosure { _ in
+          sheet.onAdded()
+          return .undefined
+        },
+        "close": JSClosure { _ in
+          sheet.willBeRemoved()
+          return .undefined
+        },
+        "closed": JSClosure { args in
+          sheet.onRemoved()
+          tokens.removeAll()
+          currentSheet = nil
+          print(args[0])
+          _ = args[0].destroy()
+          return .undefined
+        },
+      ].jsObject()
+    ].jsObject()
+    if let detents {
+      params["breakpoints"] = detents.map { JSValue(floatLiteral: $0) }.jsValue
+    }
+    let f7sheet = f7app.sheet.create(params)
+    _ = f7sheet.open()
+    currentSheet = (sheet, f7sheet)
+    return f7sheet
   }
 }

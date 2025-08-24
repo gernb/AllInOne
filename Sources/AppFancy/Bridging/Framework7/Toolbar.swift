@@ -22,7 +22,7 @@ struct Toolbar: Element {
   }
 
   var body: Element {
-    HTML(.div, id: toolbarNode, classes: .toolbar, .toolbarBottom) {
+    HTML(.div, id: toolbarNode, classes: .toolbar) {
       HTML(.div, id: contentNode, classes: .toolbarInner) {
         content()
       }

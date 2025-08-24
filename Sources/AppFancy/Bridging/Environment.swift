@@ -89,6 +89,27 @@ private struct ElementEnvironmentWrapper<T: Element, K: EnvironmentKey>: Element
   }
 }
 
+extension ElementEnvironmentWrapper: ObservableElement where T: ObservableElement {
+  func observing() {
+    Environment.$storage.withValue(localStorage) { wrapped.observing() }
+  }
+  func observables() -> Set<ObserveToken> {
+    Environment.$storage.withValue(localStorage) { wrapped.observables() }
+  }
+  func willBeAdded() {
+    Environment.$storage.withValue(localStorage) { wrapped.willBeAdded() }
+  }
+  func onAdded() {
+    Environment.$storage.withValue(localStorage) { wrapped.onAdded() }
+  }
+  func willBeRemoved() {
+    Environment.$storage.withValue(localStorage) { wrapped.willBeRemoved() }
+  }
+  func onRemoved() {
+    Environment.$storage.withValue(localStorage) { wrapped.onRemoved() }
+  }
+}
+
 /// A wrapper that captures the environment modifications so they can be
 /// provided when the wrapped page requests the Environment value.
 private struct PageEnvironmentWrapper<T: Page, K: EnvironmentKey>: EnvironmentWrapper, Page {

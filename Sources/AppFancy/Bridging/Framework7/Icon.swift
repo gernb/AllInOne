@@ -55,12 +55,28 @@ enum F7Icon: String {
   case docText = "doc_text"
   case docTextFill = "doc_text_fill"
   case ellipsis
+  case exclamationmark
+  case exclamationmarkCircle = "exclamationmark_circle"
+  case exclamationmarkCircleFill = "exclamationmark_circle_fill"
   case folder
   case folderBadgePlus = "folder_badge_plus"
   case folderFill = "folder_fill"
   case folderFillBadgePlus = "folder_fill_badge_plus"
   case house
+  case info
+  case infoCircle = "info_circle"
+  case infoCircleFill = "info_circle_fill"
   case lineHorizontal3 = "line_horizontal_3"
+  case listBelowRectangle = "list_bullet_below_rectangle"
+  case question
+  case questionCircle = "question_circle"
+  case questionCircleFill = "question_circle_fill"
+  case tag
+  case tagCircle = "tag_circle"
+  case tagCircleFill = "tag_circle_fill"
+  case xmark
+  case xmarkCircle = "xmark_circle"
+  case xmarkCircleFill = "xmark_circle_fill"
 
   var mdIcon: String {
     switch self {
